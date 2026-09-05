@@ -50,7 +50,7 @@ struct StartWorkoutSheet: View {
                                                 Text(template.name)
                                                     .font(.system(size: 14, weight: .semibold))
                                                     .foregroundStyle(.white)
-                                                Text("\(template.sortedExercises.count) exercises")
+                                                Text("\(template.sortedExercises.count) exercise\(template.sortedExercises.count == 1 ? "" : "s")")
                                                     .font(.caption)
                                                     .foregroundStyle(CurveTheme.textTertiary)
                                             }

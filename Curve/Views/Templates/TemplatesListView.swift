@@ -91,7 +91,7 @@ private struct TemplateRow: View {
                     .font(.system(size: 15, weight: .bold))
                     .foregroundStyle(.white)
             }
-            Text("\(template.sortedExercises.count) exercises")
+            Text("\(template.sortedExercises.count) exercise\(template.sortedExercises.count == 1 ? "" : "s")")
                 .font(.caption)
                 .foregroundStyle(CurveTheme.textTertiary)
             if !template.muscleGroups.isEmpty {
