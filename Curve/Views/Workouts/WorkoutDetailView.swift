@@ -4,8 +4,11 @@ import SwiftData
 struct WorkoutDetailView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
+    @AppStorage("weightUnit") private var weightUnitRaw = WeightUnit.lb.rawValue
     let session: WorkoutSession
     @State private var showingDeleteConfirmation = false
+
+    private var weightUnit: WeightUnit { WeightUnit(rawValue: weightUnitRaw) ?? .lb }
 
     var body: some View {
         ZStack {
@@ -17,7 +20,7 @@ struct WorkoutDetailView: View {
                     StatCard(title: "Sets", value: "\(session.totalSets)", icon: "number")
                 }
                 HStack(spacing: 10) {
-                    StatCard(title: "Volume", value: "\(Int(session.totalVolume)) lb", icon: "scalemass.fill")
+                    StatCard(title: "Volume", value: session.totalVolume.displayWeight(unit: weightUnit), icon: "scalemass.fill")
                     StatCard(title: "Date", value: session.startedAt.formattedShort(), icon: "calendar")
                 }
 
@@ -37,7 +40,7 @@ struct WorkoutDetailView: View {
                                         .font(.caption)
                                         .foregroundStyle(CurveTheme.textTertiary)
                                         .frame(width: 60, alignment: .leading)
-                                    Text("\(set.weight.formattedWeight()) lb × \(set.reps)")
+                                    Text("\(set.weight.displayWeight(unit: weightUnit)) × \(set.reps)")
                                         .font(.subheadline)
                                         .foregroundStyle(.white)
                                     Spacer()

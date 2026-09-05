@@ -16,6 +16,9 @@ private enum ProgressRange: String, CaseIterable {
 struct ProgressDashboardView: View {
     @Query(sort: \WorkoutSession.startedAt, order: .reverse) private var allSessions: [WorkoutSession]
     @AppStorage("weeklyGoal") private var weeklyGoal = 4
+    @AppStorage("weightUnit") private var weightUnitRaw = WeightUnit.lb.rawValue
+
+    private var weightUnit: WeightUnit { WeightUnit(rawValue: weightUnitRaw) ?? .lb }
 
     @State private var selectedRange: ProgressRange = .week
 
@@ -278,7 +281,7 @@ struct ProgressDashboardView: View {
                     .foregroundStyle(CurveTheme.textTertiary)
             }
             Spacer()
-            Text("\(record.weight.formattedWeight()) lb × \(record.reps)")
+            Text("\(record.weight.displayWeight(unit: weightUnit)) × \(record.reps)")
                 .font(.system(size: 13, weight: .bold))
                 .foregroundStyle(.white.opacity(0.9))
         }

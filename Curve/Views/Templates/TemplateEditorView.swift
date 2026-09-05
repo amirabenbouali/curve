@@ -7,6 +7,7 @@ struct TemplateEditorView: View {
     @Bindable var template: WorkoutTemplate
     var isNew: Bool = false
 
+    @AppStorage("defaultRestSeconds") private var defaultRestSeconds = 90
     @State private var showingExercisePicker = false
 
     var body: some View {
@@ -63,7 +64,7 @@ struct TemplateEditorView: View {
         }
         .sheet(isPresented: $showingExercisePicker) {
             ExercisePickerView { exercise in
-                let templateExercise = TemplateExercise(exercise: exercise, order: template.sortedExercises.count)
+                let templateExercise = TemplateExercise(exercise: exercise, order: template.sortedExercises.count, restSeconds: defaultRestSeconds)
                 templateExercise.template = template
                 context.insert(templateExercise)
             }

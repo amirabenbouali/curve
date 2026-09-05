@@ -2,8 +2,11 @@ import SwiftUI
 import Charts
 
 struct ExerciseProgressDetailView: View {
+    @AppStorage("weightUnit") private var weightUnitRaw = WeightUnit.lb.rawValue
     let exerciseName: String
     let sessions: [WorkoutSession]
+
+    private var weightUnit: WeightUnit { WeightUnit(rawValue: weightUnitRaw) ?? .lb }
 
     private struct DataPoint: Identifiable {
         let id = UUID()
@@ -18,9 +21,9 @@ struct ExerciseProgressDetailView: View {
             guard let logged = session.sortedExercises.first(where: { $0.displayName == exerciseName }) else { return nil }
             let completedSets = logged.sortedSets.filter { $0.isCompleted && !$0.isWarmup }
             guard !completedSets.isEmpty else { return nil }
-            let topWeight = completedSets.map(\.weight).max() ?? 0
-            let estimated1RM = completedSets.map(\.estimatedOneRepMax).max() ?? 0
-            let volume = completedSets.reduce(0.0) { $0 + ($1.weight * Double($1.reps)) }
+            let topWeight = weightUnit.fromCanonicalLb(completedSets.map(\.weight).max() ?? 0)
+            let estimated1RM = weightUnit.fromCanonicalLb(completedSets.map(\.estimatedOneRepMax).max() ?? 0)
+            let volume = weightUnit.fromCanonicalLb(completedSets.reduce(0.0) { $0 + ($1.weight * Double($1.reps)) })
             return DataPoint(date: session.startedAt, topWeight: topWeight, estimatedOneRepMax: estimated1RM, volume: volume)
         }
         .sorted { $0.date < $1.date }
@@ -35,8 +38,8 @@ struct ExerciseProgressDetailView: View {
             ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 HStack(spacing: 10) {
-                    StatCard(title: "Personal Best", value: "\(personalBest.formattedWeight()) lb", icon: "trophy.fill", tint: .yellow)
-                    StatCard(title: "Latest", value: "\(latestWeight.formattedWeight()) lb", icon: "clock.arrow.circlepath")
+                    StatCard(title: "Personal Best", value: "\(personalBest.formattedWeight()) \(weightUnit.label)", icon: "trophy.fill", tint: .yellow)
+                    StatCard(title: "Latest", value: "\(latestWeight.formattedWeight()) \(weightUnit.label)", icon: "clock.arrow.circlepath")
                 }
 
                 chartCard(title: "Top Set Weight") {

@@ -5,8 +5,11 @@ import Charts
 struct BodyStatsView: View {
     @Environment(\.modelContext) private var context
     @Query(sort: \BodyStatEntry.date, order: .reverse) private var entries: [BodyStatEntry]
+    @AppStorage("weightUnit") private var weightUnitRaw = WeightUnit.lb.rawValue
 
     @State private var showingAddSheet = false
+
+    private var weightUnit: WeightUnit { WeightUnit(rawValue: weightUnitRaw) ?? .lb }
 
     private var weightEntries: [BodyStatEntry] {
         entries.filter { $0.weight != nil }.sorted { $0.date < $1.date }
@@ -38,11 +41,12 @@ struct BodyStatsView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
                         HStack(spacing: 10) {
-                            StatCard(title: "Current Weight", value: latestWeight.map { "\($0.formattedWeight()) lb" } ?? "—", icon: "scalemass.fill")
+                            StatCard(title: "Current Weight", value: latestWeight.map { $0.displayWeight(unit: weightUnit) } ?? "—", icon: "scalemass.fill")
                             if let weightChange {
+                                let displayChange = weightUnit.fromCanonicalLb(weightChange)
                                 StatCard(
                                     title: "Change",
-                                    value: "\(weightChange > 0 ? "+" : "")\(weightChange.formattedWeight()) lb",
+                                    value: "\(displayChange > 0 ? "+" : "")\(displayChange.formattedWeight()) \(weightUnit.label)",
                                     icon: weightChange > 0 ? "arrow.up.right" : "arrow.down.right",
                                     tint: weightChange > 0 ? .orange : .green
                                 )
@@ -55,10 +59,11 @@ struct BodyStatsView: View {
                                     .font(.system(size: 13, weight: .semibold))
                                     .foregroundStyle(CurveTheme.textSecondary)
                                 Chart(weightEntries) { entry in
-                                    LineMark(x: .value("Date", entry.date), y: .value("Weight", entry.weight ?? 0))
+                                    let displayWeight = weightUnit.fromCanonicalLb(entry.weight ?? 0)
+                                    LineMark(x: .value("Date", entry.date), y: .value("Weight", displayWeight))
                                         .interpolationMethod(.catmullRom)
                                         .foregroundStyle(CurveTheme.chrome)
-                                    PointMark(x: .value("Date", entry.date), y: .value("Weight", entry.weight ?? 0))
+                                    PointMark(x: .value("Date", entry.date), y: .value("Weight", displayWeight))
                                         .foregroundStyle(.white)
                                 }
                                 .chartXAxis { AxisMarks { _ in AxisGridLine().foregroundStyle(CurveTheme.hairline); AxisValueLabel().foregroundStyle(CurveTheme.textSecondary) } }
@@ -112,7 +117,10 @@ struct BodyStatsView: View {
 }
 
 private struct BodyStatRow: View {
+    @AppStorage("weightUnit") private var weightUnitRaw = WeightUnit.lb.rawValue
     let entry: BodyStatEntry
+
+    private var weightUnit: WeightUnit { WeightUnit(rawValue: weightUnitRaw) ?? .lb }
 
     var body: some View {
         HStack {
@@ -129,7 +137,7 @@ private struct BodyStatRow: View {
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {
                 if let weight = entry.weight {
-                    Text("\(weight.formattedWeight()) lb")
+                    Text(weight.displayWeight(unit: weightUnit))
                         .font(.system(size: 14, weight: .bold))
                         .foregroundStyle(.white)
                 }

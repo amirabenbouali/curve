@@ -118,7 +118,10 @@ struct WorkoutsListView: View {
 }
 
 private struct WorkoutSessionRow: View {
+    @AppStorage("weightUnit") private var weightUnitRaw = WeightUnit.lb.rawValue
     let session: WorkoutSession
+
+    private var weightUnit: WeightUnit { WeightUnit(rawValue: weightUnitRaw) ?? .lb }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -134,7 +137,7 @@ private struct WorkoutSessionRow: View {
             HStack(spacing: 14) {
                 Label(session.duration.formattedDuration(), systemImage: "clock")
                 Label("\(session.totalSets) sets", systemImage: "number")
-                Label("\(Int(session.totalVolume)) lb", systemImage: "scalemass")
+                Label(session.totalVolume.displayWeight(unit: weightUnit), systemImage: "scalemass")
             }
             .font(.caption)
             .foregroundStyle(CurveTheme.textSecondary)

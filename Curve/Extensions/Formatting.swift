@@ -1,9 +1,25 @@
 import Foundation
 
-enum WeightUnit: String, CaseIterable {
+enum WeightUnit: String, CaseIterable, Identifiable {
     case lb, kg
 
+    var id: String { rawValue }
     var label: String { rawValue }
+
+    /// Reasonable plate/dumbbell increment for stepper controls.
+    var stepSize: Double { self == .kg ? 1.25 : 2.5 }
+
+    private static let kgPerLb = 0.45359237
+
+    /// Weight is always stored canonically in pounds; this converts for display.
+    func fromCanonicalLb(_ lbValue: Double) -> Double {
+        self == .kg ? lbValue * Self.kgPerLb : lbValue
+    }
+
+    /// Converts a value entered in this unit back to canonical pounds for storage.
+    func toCanonicalLb(_ value: Double) -> Double {
+        self == .kg ? value / Self.kgPerLb : value
+    }
 }
 
 extension Double {
@@ -12,6 +28,11 @@ extension Double {
             return String(format: "%.0f", self)
         }
         return String(format: "%.1f", self)
+    }
+
+    /// Formats a canonical-pounds value in the given display unit, with unit suffix.
+    func displayWeight(unit: WeightUnit) -> String {
+        "\(unit.fromCanonicalLb(self).formattedWeight()) \(unit.label)"
     }
 }
 

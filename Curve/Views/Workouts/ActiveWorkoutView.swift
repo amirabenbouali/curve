@@ -4,7 +4,15 @@ import SwiftData
 struct ActiveWorkoutView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
+    @Query(sort: \WorkoutSession.startedAt, order: .reverse) private var allSessions: [WorkoutSession]
     @Bindable var session: WorkoutSession
+
+    @AppStorage("defaultRestSeconds") private var defaultRestSeconds = 90
+    @AppStorage("weightUnit") private var weightUnitRaw = WeightUnit.lb.rawValue
+    @AppStorage("weeklyGoal") private var weeklyGoal = 4
+    @AppStorage("workoutRemindersEnabled") private var remindersEnabled = true
+    @AppStorage("streakRiskAlertsEnabled") private var streakRiskEnabled = true
+    @AppStorage("weeklySummaryEnabled") private var weeklySummaryEnabled = false
 
     @State private var restTimer = RestTimerModel()
     @State private var selectedExerciseIndex: Int = 0
@@ -12,6 +20,8 @@ struct ActiveWorkoutView: View {
     @State private var showingFinishConfirmation = false
     @State private var elapsedTimer: Timer?
     @State private var now = Date()
+
+    private var weightUnit: WeightUnit { WeightUnit(rawValue: weightUnitRaw) ?? .lb }
 
     private var exercises: [LoggedExercise] { session.sortedExercises }
 
@@ -84,7 +94,7 @@ struct ActiveWorkoutView: View {
                 let logged = LoggedExercise(exercise: exercise, order: exercises.count)
                 logged.session = session
                 context.insert(logged)
-                let set = WorkoutSet(setIndex: 0)
+                let set = WorkoutSet(setIndex: 0, restSeconds: defaultRestSeconds)
                 set.loggedExercise = logged
                 context.insert(set)
             }
@@ -219,7 +229,15 @@ struct ActiveWorkoutView: View {
 
             HStack(spacing: 12) {
                 IntStepperField(label: "REPS", value: Binding(get: { currentSet.reps }, set: { currentSet.reps = max(0, $0) }), unit: "reps", step: 1)
-                DoubleStepperField(label: "WEIGHT", value: Binding(get: { currentSet.weight }, set: { currentSet.weight = max(0, $0) }), unit: "lb", step: 2.5)
+                DoubleStepperField(
+                    label: "WEIGHT",
+                    value: Binding(
+                        get: { weightUnit.fromCanonicalLb(currentSet.weight) },
+                        set: { currentSet.weight = max(0, weightUnit.toCanonicalLb($0)) }
+                    ),
+                    unit: weightUnit.label,
+                    step: weightUnit.stepSize
+                )
             }
 
             Button("Log set") { logCurrentSet(currentSet, exercise: exercise) }
@@ -340,6 +358,8 @@ struct ActiveWorkoutView: View {
         set.isCompleted = true
         try? context.save()
 
+        if remindersEnabled { NotificationManager.cancelTodaysReminder() }
+
         let stillHasIncomplete = hasIncomplete(exercise)
         let workoutFullyComplete = !stillHasIncomplete && !exercises.contains(where: hasIncomplete)
 
@@ -359,7 +379,7 @@ struct ActiveWorkoutView: View {
     private func addSetToCurrentExercise(_ exercise: LoggedExercise) {
         let sets = exercise.sortedSets
         let last = sets.last
-        let newSet = WorkoutSet(setIndex: sets.count, reps: last?.reps ?? 0, weight: last?.weight ?? 0, restSeconds: last?.restSeconds ?? 90)
+        let newSet = WorkoutSet(setIndex: sets.count, reps: last?.reps ?? 0, weight: last?.weight ?? 0, restSeconds: last?.restSeconds ?? defaultRestSeconds)
         newSet.loggedExercise = exercise
         context.insert(newSet)
     }
@@ -367,6 +387,12 @@ struct ActiveWorkoutView: View {
     private func finishWorkout() {
         session.endedAt = Date()
         try? context.save()
+        if streakRiskEnabled {
+            let result = StreakEngine.calculate(sessions: allSessions, weeklyGoal: weeklyGoal)
+            if result.thisWeekCount >= weeklyGoal {
+                NotificationManager.cancelStreakRiskAlert()
+            }
+        }
         dismiss()
     }
 

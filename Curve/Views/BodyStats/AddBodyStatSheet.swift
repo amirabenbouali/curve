@@ -4,11 +4,14 @@ import SwiftData
 struct AddBodyStatSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
+    @AppStorage("weightUnit") private var weightUnitRaw = WeightUnit.lb.rawValue
 
     @State private var date = Date()
     @State private var weightText = ""
     @State private var bodyFatText = ""
     @State private var notes = ""
+
+    private var weightUnit: WeightUnit { WeightUnit(rawValue: weightUnitRaw) ?? .lb }
 
     var body: some View {
         NavigationStack {
@@ -22,7 +25,7 @@ struct AddBodyStatSheet: View {
                         HStack {
                             Text("Weight")
                             Spacer()
-                            TextField("lb", text: $weightText)
+                            TextField(weightUnit.label, text: $weightText)
                                 .keyboardType(.decimalPad)
                                 .multilineTextAlignment(.trailing)
                                 .frame(width: 100)
@@ -62,9 +65,10 @@ struct AddBodyStatSheet: View {
     }
 
     private func save() {
+        let enteredWeight = Double(weightText).map { weightUnit.toCanonicalLb($0) }
         let entry = BodyStatEntry(
             date: date,
-            weight: Double(weightText),
+            weight: enteredWeight,
             bodyFatPercentage: Double(bodyFatText),
             notes: notes.trimmingCharacters(in: .whitespacesAndNewlines)
         )

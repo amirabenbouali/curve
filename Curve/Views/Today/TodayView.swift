@@ -8,6 +8,9 @@ struct TodayView: View {
 
     @AppStorage("userName") private var userName = ""
     @AppStorage("weeklyGoal") private var weeklyGoal = 4
+    @AppStorage("weightUnit") private var weightUnitRaw = WeightUnit.lb.rawValue
+
+    private var weightUnit: WeightUnit { WeightUnit(rawValue: weightUnitRaw) ?? .lb }
 
     @State private var activeSession: WorkoutSession?
     @State private var showingStartSheet = false
@@ -67,7 +70,7 @@ struct TodayView: View {
                 }
 
                 HStack(spacing: 10) {
-                    StatCard(title: "Volume", value: "\(Int(thisWeekVolume)) lb", icon: "scalemass.fill")
+                    StatCard(title: "Volume", value: thisWeekVolume.displayWeight(unit: weightUnit), icon: "scalemass.fill")
                     StatCard(title: "Active time", value: thisWeekActiveTime.formattedDuration(), icon: "clock.fill")
                     StatCard(title: "Sets", value: "\(thisWeekSets)", icon: "checkmark.circle.fill")
                 }
