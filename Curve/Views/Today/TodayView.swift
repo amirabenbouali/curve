@@ -195,6 +195,13 @@ struct TodayView: View {
                     .buttonStyle(.curveChrome)
             }
             .glassCard()
+            .contextMenu {
+                Button(role: .destructive) {
+                    context.delete(inProgressSession)
+                } label: {
+                    Label("Discard Workout", systemImage: "trash")
+                }
+            }
         } else if let todaysCompletedSession {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .top) {

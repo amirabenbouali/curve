@@ -54,6 +54,13 @@ struct WorkoutsListView: View {
                                 .glassCard(cornerRadius: 18, padding: 14)
                             }
                             .buttonStyle(.plain)
+                            .contextMenu {
+                                Button(role: .destructive) {
+                                    context.delete(inProgressSession)
+                                } label: {
+                                    Label("Discard Workout", systemImage: "trash")
+                                }
+                            }
                         }
 
                         Text("History")
