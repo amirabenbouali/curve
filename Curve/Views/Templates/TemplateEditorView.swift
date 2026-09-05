@@ -10,32 +10,39 @@ struct TemplateEditorView: View {
     @State private var showingExercisePicker = false
 
     var body: some View {
-        Form {
-            Section {
-                TextField("Template Name", text: $template.name)
-                IconPicker(selection: $template.iconName)
-            }
+        ZStack {
+            CurveBackground()
+            Form {
+                Section {
+                    TextField("Template Name", text: $template.name)
+                    IconPicker(selection: $template.iconName)
+                }
+                .listRowBackground(Color.white.opacity(0.08))
 
-            Section("Exercises") {
-                if template.sortedExercises.isEmpty {
-                    Text("No exercises added yet.")
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(template.sortedExercises) { templateExercise in
-                        TemplateExerciseRow(templateExercise: templateExercise)
+                Section("Exercises") {
+                    if template.sortedExercises.isEmpty {
+                        Text("No exercises added yet.")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(template.sortedExercises) { templateExercise in
+                            TemplateExerciseRow(templateExercise: templateExercise)
+                        }
+                        .onDelete(perform: deleteExercises)
+                        .onMove(perform: moveExercises)
                     }
-                    .onDelete(perform: deleteExercises)
-                    .onMove(perform: moveExercises)
+                    Button {
+                        showingExercisePicker = true
+                    } label: {
+                        Label("Add Exercise", systemImage: "plus.circle.fill")
+                    }
                 }
-                Button {
-                    showingExercisePicker = true
-                } label: {
-                    Label("Add Exercise", systemImage: "plus.circle.fill")
-                }
+                .listRowBackground(Color.white.opacity(0.08))
             }
+            .curveScrollBackground()
         }
         .navigationTitle(isNew ? "New Template" : template.name)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
         .toolbar {
             if isNew {
                 ToolbarItem(placement: .cancellationAction) {
@@ -130,4 +137,5 @@ private struct IconPicker: View {
         TemplateEditorView(template: WorkoutTemplate(name: "Leg Day"))
     }
     .modelContainer(PreviewData.container)
+    .preferredColorScheme(.dark)
 }

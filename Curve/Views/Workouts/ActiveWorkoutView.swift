@@ -14,48 +14,65 @@ struct ActiveWorkoutView: View {
     @State private var now = Date()
 
     var body: some View {
-        VStack(spacing: 0) {
-            if restTimer.isRunning {
-                RestTimerBar(timer: restTimer)
-                    .padding(.top, 8)
-            }
+        ZStack {
+            CurveBackground()
 
-            List {
-                Section {
-                    HStack {
-                        TextField("Workout Name", text: $session.name)
-                            .font(.headline)
-                        Spacer()
-                        Text(now.timeIntervalSince(session.startedAt).formattedDuration())
-                            .font(.subheadline.monospacedDigit())
-                            .foregroundStyle(.secondary)
-                    }
+            VStack(spacing: 0) {
+                if restTimer.isRunning {
+                    RestTimerBar(timer: restTimer)
+                        .padding(.top, 8)
                 }
 
-                ForEach(session.sortedExercises) { loggedExercise in
-                    Section {
-                        ExerciseLogSection(loggedExercise: loggedExercise, restTimer: restTimer)
-                    } header: {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
                         HStack {
-                            Text(loggedExercise.displayName)
+                            TextField("Workout Name", text: $session.name)
+                                .font(.system(size: 17, weight: .bold))
+                                .foregroundStyle(.white)
                             Spacer()
-                            MuscleGroupChip(muscleGroup: loggedExercise.muscleGroup)
+                            Text(now.timeIntervalSince(session.startedAt).formattedDuration())
+                                .font(.subheadline.monospacedDigit())
+                                .foregroundStyle(CurveTheme.textSecondary)
                         }
-                    }
-                }
+                        .glassCard(cornerRadius: 18, padding: 14)
 
-                Section {
-                    Button {
-                        showingExercisePicker = true
-                    } label: {
-                        Label("Add Exercise", systemImage: "plus.circle.fill")
+                        ForEach(session.sortedExercises) { loggedExercise in
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack {
+                                    Text(loggedExercise.displayName)
+                                        .font(.system(size: 15, weight: .bold))
+                                        .foregroundStyle(.white)
+                                    Spacer()
+                                    MuscleGroupChip(muscleGroup: loggedExercise.muscleGroup)
+                                }
+                                ExerciseLogSection(loggedExercise: loggedExercise, restTimer: restTimer)
+                            }
+                            .glassCard(cornerRadius: 18, padding: 14)
+                        }
+
+                        Button {
+                            showingExercisePicker = true
+                        } label: {
+                            HStack {
+                                Image(systemName: "plus.circle.fill")
+                                Text("Add Exercise")
+                                Spacer()
+                            }
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .glassCard(cornerRadius: 18, padding: 14)
+                        }
+                        .buttonStyle(.plain)
                     }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 12)
+                    .padding(.bottom, 40)
                 }
             }
-            .listStyle(.insetGrouped)
         }
         .navigationTitle("Log Workout")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Discard") { showingDiscardConfirmation = true }
@@ -95,6 +112,7 @@ struct ActiveWorkoutView: View {
             elapsedTimer?.invalidate()
         }
         .interactiveDismissDisabled()
+        .preferredColorScheme(.dark)
     }
 
     private func finishWorkout() {
@@ -116,21 +134,28 @@ private struct ExerciseLogSection: View {
     let restTimer: RestTimerModel
 
     var body: some View {
-        ForEach(Array(loggedExercise.sortedSets.enumerated()), id: \.element.id) { index, set in
-            SetRowView(set: set, setNumber: index + 1) {
-                if set.isCompleted {
-                    restTimer.start(seconds: set.restSeconds)
+        VStack(spacing: 6) {
+            ForEach(Array(loggedExercise.sortedSets.enumerated()), id: \.element.id) { index, set in
+                SetRowView(set: set, setNumber: index + 1) {
+                    if set.isCompleted {
+                        restTimer.start(seconds: set.restSeconds)
+                    }
+                }
+                if index < loggedExercise.sortedSets.count - 1 {
+                    Divider().overlay(CurveTheme.hairline)
                 }
             }
         }
-        .onDelete(perform: deleteSets)
 
         Button {
             addSet()
         } label: {
             Label("Add Set", systemImage: "plus")
-                .font(.subheadline)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.white.opacity(0.85))
         }
+        .buttonStyle(.plain)
+        .padding(.top, 2)
     }
 
     private func addSet() {
@@ -144,16 +169,6 @@ private struct ExerciseLogSection: View {
         set.loggedExercise = loggedExercise
         context.insert(set)
     }
-
-    private func deleteSets(at offsets: IndexSet) {
-        let sorted = loggedExercise.sortedSets
-        for index in offsets {
-            context.delete(sorted[index])
-        }
-        for (index, set) in loggedExercise.sortedSets.enumerated() {
-            set.setIndex = index
-        }
-    }
 }
 
 #Preview {
@@ -161,4 +176,5 @@ private struct ExerciseLogSection: View {
         ActiveWorkoutView(session: WorkoutSession(name: "Push Day"))
     }
     .modelContainer(PreviewData.container)
+    .preferredColorScheme(.dark)
 }

@@ -30,52 +30,59 @@ struct ExercisePickerView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        FilterChip(title: "All", isSelected: selectedGroup == nil) {
-                            selectedGroup = nil
-                        }
-                        ForEach(MuscleGroup.allCases) { group in
-                            FilterChip(title: group.displayName, isSelected: selectedGroup == group) {
-                                selectedGroup = selectedGroup == group ? nil : group
+            ZStack {
+                CurveBackground()
+                VStack(spacing: 0) {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            FilterChip(title: "All", isSelected: selectedGroup == nil) {
+                                selectedGroup = nil
+                            }
+                            ForEach(MuscleGroup.allCases) { group in
+                                FilterChip(title: group.displayName, isSelected: selectedGroup == group) {
+                                    selectedGroup = selectedGroup == group ? nil : group
+                                }
                             }
                         }
+                        .padding(.horizontal)
+                        .padding(.vertical, 8)
                     }
-                    .padding(.horizontal)
-                    .padding(.vertical, 8)
-                }
 
-                List {
-                    ForEach(groupedExercises, id: \.0) { group, exercises in
-                        Section(group.displayName) {
-                            ForEach(exercises) { exercise in
-                                Button {
-                                    onSelect(exercise)
-                                    dismiss()
-                                } label: {
-                                    HStack {
-                                        Text(exercise.name)
-                                            .foregroundStyle(.primary)
-                                        if exercise.isCustom {
-                                            Text("Custom")
-                                                .font(.caption2)
-                                                .padding(.horizontal, 6)
-                                                .padding(.vertical, 2)
-                                                .background(Capsule().fill(.secondary.opacity(0.15)))
+                    List {
+                        ForEach(groupedExercises, id: \.0) { group, exercises in
+                            Section(group.displayName) {
+                                ForEach(exercises) { exercise in
+                                    Button {
+                                        onSelect(exercise)
+                                        dismiss()
+                                    } label: {
+                                        HStack {
+                                            Text(exercise.name)
+                                                .foregroundStyle(.white)
+                                            if exercise.isCustom {
+                                                Text("Custom")
+                                                    .font(.caption2)
+                                                    .foregroundStyle(.white.opacity(0.7))
+                                                    .padding(.horizontal, 6)
+                                                    .padding(.vertical, 2)
+                                                    .background(Capsule().fill(.white.opacity(0.15)))
+                                            }
+                                            Spacer()
                                         }
-                                        Spacer()
                                     }
+                                    .listRowBackground(Color.white.opacity(0.06))
                                 }
                             }
                         }
                     }
+                    .listStyle(.plain)
+                    .curveScrollBackground()
                 }
-                .listStyle(.plain)
             }
             .searchable(text: $searchText, prompt: "Search exercises")
             .navigationTitle("Add Exercise")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -95,6 +102,7 @@ struct ExercisePickerView: View {
                 }
             }
         }
+        .preferredColorScheme(.dark)
     }
 }
 
@@ -109,8 +117,9 @@ private struct FilterChip: View {
                 .font(.caption.weight(.medium))
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(Capsule().fill(isSelected ? Color.accentColor : Color.secondary.opacity(0.15)))
-                .foregroundStyle(isSelected ? .white : .primary)
+                .background(Capsule().fill(isSelected ? Color.white.opacity(0.9) : Color.white.opacity(0.14)))
+                .overlay(Capsule().strokeBorder(.white.opacity(isSelected ? 0 : 0.3), lineWidth: 1))
+                .foregroundStyle(isSelected ? Color(red: 0.078, green: 0.129, blue: 0.114) : .white)
         }
     }
 }
@@ -124,16 +133,21 @@ private struct AddCustomExerciseSheet: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                TextField("Exercise name", text: $name)
-                Picker("Muscle Group", selection: $muscleGroup) {
-                    ForEach(MuscleGroup.allCases) { group in
-                        Text(group.displayName).tag(group)
+            ZStack {
+                CurveBackground()
+                Form {
+                    TextField("Exercise name", text: $name)
+                    Picker("Muscle Group", selection: $muscleGroup) {
+                        ForEach(MuscleGroup.allCases) { group in
+                            Text(group.displayName).tag(group)
+                        }
                     }
                 }
+                .curveScrollBackground()
             }
             .navigationTitle("New Exercise")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -149,5 +163,6 @@ private struct AddCustomExerciseSheet: View {
                 }
             }
         }
+        .preferredColorScheme(.dark)
     }
 }

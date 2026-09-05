@@ -9,44 +9,73 @@ struct StartWorkoutSheet: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                Section {
-                    Button {
-                        start(from: nil)
-                    } label: {
-                        Label("Start Empty Workout", systemImage: "plus.circle")
-                    }
-                }
-                if !templates.isEmpty {
-                    Section("From Template") {
-                        ForEach(templates) { template in
-                            Button {
-                                start(from: template)
-                            } label: {
-                                HStack {
-                                    Image(systemName: template.iconName)
-                                        .foregroundStyle(Color.accentColor)
-                                    VStack(alignment: .leading) {
-                                        Text(template.name)
-                                            .foregroundStyle(.primary)
-                                        Text("\(template.sortedExercises.count) exercises")
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
+            ZStack {
+                CurveBackground()
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        Button {
+                            start(from: nil)
+                        } label: {
+                            HStack {
+                                Image(systemName: "plus.circle.fill")
+                                    .foregroundStyle(.white)
+                                Text("Start Empty Workout")
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundStyle(.white)
+                                Spacer()
+                            }
+                            .glassCard(cornerRadius: 18, padding: 16)
+                        }
+                        .buttonStyle(.plain)
+
+                        if !templates.isEmpty {
+                            Text("From Template")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(CurveTheme.textSecondary)
+
+                            VStack(spacing: 10) {
+                                ForEach(templates) { template in
+                                    Button {
+                                        start(from: template)
+                                    } label: {
+                                        HStack {
+                                            ZStack {
+                                                Circle().fill(.white.opacity(0.16))
+                                                Image(systemName: template.iconName)
+                                                    .font(.system(size: 13, weight: .semibold))
+                                                    .foregroundStyle(.white)
+                                            }
+                                            .frame(width: 32, height: 32)
+                                            VStack(alignment: .leading, spacing: 2) {
+                                                Text(template.name)
+                                                    .font(.system(size: 14, weight: .semibold))
+                                                    .foregroundStyle(.white)
+                                                Text("\(template.sortedExercises.count) exercises")
+                                                    .font(.caption)
+                                                    .foregroundStyle(CurveTheme.textTertiary)
+                                            }
+                                            Spacer()
+                                        }
+                                        .glassCard(cornerRadius: 18, padding: 14)
                                     }
+                                    .buttonStyle(.plain)
                                 }
                             }
                         }
                     }
+                    .padding(20)
                 }
             }
             .navigationTitle("Start Workout")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
                 }
             }
         }
+        .preferredColorScheme(.dark)
     }
 
     private func start(from template: WorkoutTemplate?) {

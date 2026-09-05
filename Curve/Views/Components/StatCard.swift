@@ -5,38 +5,43 @@ struct StatCard: View {
     let value: String
     var subtitle: String? = nil
     var icon: String? = nil
-    var tint: Color = .accentColor
+    var tint: Color = .white
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 4) {
-                if let icon {
+        VStack(alignment: .leading, spacing: 8) {
+            if let icon {
+                ZStack {
+                    Circle().fill(.white.opacity(0.16))
                     Image(systemName: icon)
+                        .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(tint)
                 }
-                Text(title)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                .frame(width: 28, height: 28)
             }
             Text(value)
-                .font(.title2.weight(.semibold))
-                .foregroundStyle(.primary)
+                .font(.system(size: 18, weight: .bold))
+                .foregroundStyle(CurveTheme.textPrimary)
+            Text(title)
+                .font(.system(size: 10.5, weight: .medium))
+                .foregroundStyle(CurveTheme.textSecondary)
             if let subtitle {
                 Text(subtitle)
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(CurveTheme.textTertiary)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
-        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(.background.secondary))
+        .glassCard(cornerRadius: 18, padding: 14)
     }
 }
 
 #Preview {
-    HStack {
-        StatCard(title: "Streak", value: "4 days", icon: "flame.fill", tint: .orange)
-        StatCard(title: "This Week", value: "3 workouts", icon: "calendar")
+    ZStack {
+        CurveBackground()
+        HStack {
+            StatCard(title: "Streak", value: "4 days", icon: "flame.fill", tint: .orange)
+            StatCard(title: "This Week", value: "3 workouts", icon: "calendar")
+        }
+        .padding()
     }
-    .padding()
 }

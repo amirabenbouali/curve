@@ -5,32 +5,14 @@ import Charts
 struct ProgressDashboardView: View {
     @Query(sort: \WorkoutSession.startedAt, order: .reverse) private var allSessions: [WorkoutSession]
     @Query(sort: \Exercise.name) private var allExercises: [Exercise]
+    @AppStorage("weeklyGoal") private var weeklyGoal = 4
 
     private var completedSessions: [WorkoutSession] {
         allSessions.filter { !$0.isInProgress }
     }
 
-    private var currentStreak: Int {
-        let calendar = Calendar.current
-        let workoutDays = Set(completedSessions.map { calendar.startOfDay(for: $0.startedAt) })
-        guard !workoutDays.isEmpty else { return 0 }
-
-        var streak = 0
-        var day = calendar.startOfDay(for: Date())
-        if !workoutDays.contains(day) {
-            day = calendar.date(byAdding: .day, value: -1, to: day) ?? day
-        }
-        while workoutDays.contains(day) {
-            streak += 1
-            guard let previous = calendar.date(byAdding: .day, value: -1, to: day) else { break }
-            day = previous
-        }
-        return streak
-    }
-
-    private var thisWeekCount: Int {
-        let startOfWeek = Date().startOfWeek()
-        return completedSessions.filter { $0.startedAt >= startOfWeek }.count
+    private var streakResult: WeeklyStreakResult {
+        StreakEngine.calculate(sessions: allSessions, weeklyGoal: weeklyGoal)
     }
 
     private var muscleGroupSetCounts: [(MuscleGroup, Int)] {
@@ -59,7 +41,9 @@ struct ProgressDashboardView: View {
     }
 
     var body: some View {
-        Group {
+        ZStack {
+            CurveBackground()
+            Group {
             if completedSessions.isEmpty {
                 EmptyStateView(
                     icon: "chart.line.uptrend.xyaxis",
@@ -67,49 +51,78 @@ struct ProgressDashboardView: View {
                     message: "Complete a workout to start seeing your strength trends here."
                 )
             } else {
-                List {
-                    Section {
-                        HStack {
-                            StatCard(title: "Streak", value: "\(currentStreak) day\(currentStreak == 1 ? "" : "s")", icon: "flame.fill", tint: .orange)
-                            StatCard(title: "This Week", value: "\(thisWeekCount) workout\(thisWeekCount == 1 ? "" : "s")", icon: "calendar", tint: .blue)
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        HStack(spacing: 10) {
+                            StatCard(title: "Week streak", value: "\(streakResult.streakWeeks)", icon: "flame.fill", tint: .orange)
+                            StatCard(title: "This week", value: "\(streakResult.thisWeekCount)/\(weeklyGoal)", icon: "calendar")
                         }
-                        .listRowInsets(EdgeInsets())
-                    }
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
 
-                    if !muscleGroupSetCounts.isEmpty {
-                        Section("Muscle Group Focus (30 days)") {
-                            Chart(muscleGroupSetCounts, id: \.0) { group, count in
-                                BarMark(
-                                    x: .value("Sets", count),
-                                    y: .value("Muscle Group", group.displayName)
-                                )
-                                .foregroundStyle(group.color)
-                                .cornerRadius(4)
+                        if !muscleGroupSetCounts.isEmpty {
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text("Muscle Group Focus (30 days)")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundStyle(CurveTheme.textSecondary)
+                                Chart(muscleGroupSetCounts, id: \.0) { group, count in
+                                    BarMark(
+                                        x: .value("Sets", count),
+                                        y: .value("Muscle Group", group.displayName)
+                                    )
+                                    .foregroundStyle(group.color)
+                                    .cornerRadius(4)
+                                }
+                                .chartXAxis { AxisMarks { _ in AxisGridLine().foregroundStyle(CurveTheme.hairline); AxisValueLabel().foregroundStyle(CurveTheme.textSecondary) } }
+                                .chartYAxis { AxisMarks { _ in AxisValueLabel().foregroundStyle(CurveTheme.textSecondary) } }
+                                .frame(height: CGFloat(muscleGroupSetCounts.count) * 32 + 20)
                             }
-                            .frame(height: CGFloat(muscleGroupSetCounts.count) * 32 + 20)
+                            .glassCard()
                         }
-                    }
 
-                    Section("Weekly Consistency") {
-                        WeeklyConsistencyChart(sessions: completedSessions)
-                            .frame(height: 160)
-                    }
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("Weekly Consistency")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(CurveTheme.textSecondary)
+                            WeeklyConsistencyChart(sessions: completedSessions)
+                                .frame(height: 150)
+                        }
+                        .glassCard()
 
-                    if !loggedExerciseNames.isEmpty {
-                        Section("Strength Progression") {
-                            ForEach(loggedExerciseNames, id: \.self) { name in
-                                NavigationLink(name) {
-                                    ExerciseProgressDetailView(exerciseName: name, sessions: completedSessions)
+                        if !loggedExerciseNames.isEmpty {
+                            Text("Strength Progression")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundStyle(CurveTheme.textPrimary)
+                                .padding(.top, 4)
+
+                            VStack(spacing: 10) {
+                                ForEach(loggedExerciseNames, id: \.self) { name in
+                                    NavigationLink {
+                                        ExerciseProgressDetailView(exerciseName: name, sessions: completedSessions)
+                                    } label: {
+                                        HStack {
+                                            Text(name)
+                                                .font(.system(size: 14, weight: .semibold))
+                                                .foregroundStyle(.white)
+                                            Spacer()
+                                            Image(systemName: "chevron.right")
+                                                .font(.caption.weight(.semibold))
+                                                .foregroundStyle(CurveTheme.textTertiary)
+                                        }
+                                        .glassCard(cornerRadius: 18, padding: 14)
+                                    }
+                                    .buttonStyle(.plain)
                                 }
                             }
                         }
                     }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 8)
+                    .padding(.bottom, 110)
                 }
+            }
             }
         }
         .navigationTitle("Progress")
+        .toolbarBackground(.hidden, for: .navigationBar)
     }
 }
 
@@ -133,15 +146,16 @@ private struct WeeklyConsistencyChart: View {
                 x: .value("Week", week, unit: .weekOfYear),
                 y: .value("Workouts", count)
             )
-            .foregroundStyle(Color.accentColor)
+            .foregroundStyle(CurveTheme.chrome)
             .cornerRadius(4)
         }
         .chartXAxis {
             AxisMarks(values: .stride(by: .weekOfYear)) { value in
-                AxisGridLine()
-                AxisValueLabel(format: .dateTime.month(.abbreviated).day())
+                AxisGridLine().foregroundStyle(CurveTheme.hairline)
+                AxisValueLabel(format: .dateTime.month(.abbreviated).day()).foregroundStyle(CurveTheme.textSecondary)
             }
         }
+        .chartYAxis { AxisMarks { _ in AxisGridLine().foregroundStyle(CurveTheme.hairline); AxisValueLabel().foregroundStyle(CurveTheme.textSecondary) } }
     }
 }
 
@@ -150,4 +164,5 @@ private struct WeeklyConsistencyChart: View {
         ProgressDashboardView()
     }
     .modelContainer(PreviewData.container)
+    .preferredColorScheme(.dark)
 }

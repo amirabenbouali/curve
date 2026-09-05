@@ -26,76 +26,83 @@ struct ExerciseProgressDetailView: View {
         .sorted { $0.date < $1.date }
     }
 
-    private var personalBest: Double {
-        dataPoints.map(\.topWeight).max() ?? 0
-    }
-
-    private var latestWeight: Double {
-        dataPoints.last?.topWeight ?? 0
-    }
+    private var personalBest: Double { dataPoints.map(\.topWeight).max() ?? 0 }
+    private var latestWeight: Double { dataPoints.last?.topWeight ?? 0 }
 
     var body: some View {
-        List {
-            Section {
-                HStack {
+        ZStack {
+            CurveBackground()
+            ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                HStack(spacing: 10) {
                     StatCard(title: "Personal Best", value: "\(personalBest.formattedWeight()) lb", icon: "trophy.fill", tint: .yellow)
                     StatCard(title: "Latest", value: "\(latestWeight.formattedWeight()) lb", icon: "clock.arrow.circlepath")
                 }
-                .listRowInsets(EdgeInsets())
-            }
-            .listRowBackground(Color.clear)
-            .listRowSeparator(.hidden)
 
-            Section("Top Set Weight") {
-                if dataPoints.count >= 2 {
-                    Chart(dataPoints) { point in
-                        LineMark(
-                            x: .value("Date", point.date),
-                            y: .value("Weight", point.topWeight)
-                        )
-                        .interpolationMethod(.catmullRom)
-                        .symbol(.circle)
-                        .foregroundStyle(Color.accentColor)
-
-                        PointMark(
-                            x: .value("Date", point.date),
-                            y: .value("Weight", point.topWeight)
-                        )
-                        .foregroundStyle(Color.accentColor)
+                chartCard(title: "Top Set Weight") {
+                    if dataPoints.count >= 2 {
+                        Chart(dataPoints) { point in
+                            LineMark(x: .value("Date", point.date), y: .value("Weight", point.topWeight))
+                                .interpolationMethod(.catmullRom)
+                                .foregroundStyle(CurveTheme.chrome)
+                            PointMark(x: .value("Date", point.date), y: .value("Weight", point.topWeight))
+                                .foregroundStyle(.white)
+                        }
+                        .themedChartAxes()
+                        .frame(height: 180)
+                    } else {
+                        Text("Log this exercise at least twice to see a trend.")
+                            .foregroundStyle(CurveTheme.textSecondary)
                     }
-                    .frame(height: 200)
-                } else {
-                    Text("Log this exercise at least twice to see a trend.")
-                        .foregroundStyle(.secondary)
+                }
+
+                chartCard(title: "Estimated 1-Rep Max") {
+                    Chart(dataPoints) { point in
+                        LineMark(x: .value("Date", point.date), y: .value("1RM", point.estimatedOneRepMax))
+                            .interpolationMethod(.catmullRom)
+                            .foregroundStyle(.mint)
+                    }
+                    .themedChartAxes()
+                    .frame(height: 150)
+                }
+
+                chartCard(title: "Volume per Session") {
+                    Chart(dataPoints) { point in
+                        BarMark(x: .value("Date", point.date, unit: .day), y: .value("Volume", point.volume))
+                            .foregroundStyle(.teal)
+                            .cornerRadius(3)
+                    }
+                    .themedChartAxes()
+                    .frame(height: 150)
                 }
             }
-
-            Section("Estimated 1-Rep Max") {
-                Chart(dataPoints) { point in
-                    LineMark(
-                        x: .value("Date", point.date),
-                        y: .value("1RM", point.estimatedOneRepMax)
-                    )
-                    .interpolationMethod(.catmullRom)
-                    .foregroundStyle(.purple)
-                }
-                .frame(height: 160)
-            }
-
-            Section("Volume per Session") {
-                Chart(dataPoints) { point in
-                    BarMark(
-                        x: .value("Date", point.date, unit: .day),
-                        y: .value("Volume", point.volume)
-                    )
-                    .foregroundStyle(.teal)
-                    .cornerRadius(3)
-                }
-                .frame(height: 160)
+            .padding(.horizontal, 20)
+            .padding(.top, 8)
+            .padding(.bottom, 40)
             }
         }
         .navigationTitle(exerciseName)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
+    }
+
+    @ViewBuilder
+    private func chartCard<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(CurveTheme.textSecondary)
+            content()
+        }
+        .glassCard()
+    }
+}
+
+private extension View {
+    func themedChartAxes() -> some View {
+        self
+            .chartXAxis { AxisMarks { _ in AxisGridLine().foregroundStyle(CurveTheme.hairline); AxisValueLabel().foregroundStyle(CurveTheme.textSecondary) } }
+            .chartYAxis { AxisMarks { _ in AxisGridLine().foregroundStyle(CurveTheme.hairline); AxisValueLabel().foregroundStyle(CurveTheme.textSecondary) } }
     }
 }
 
@@ -104,4 +111,5 @@ struct ExerciseProgressDetailView: View {
         ExerciseProgressDetailView(exerciseName: "Back Squat", sessions: [])
     }
     .modelContainer(PreviewData.container)
+    .preferredColorScheme(.dark)
 }

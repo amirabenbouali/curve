@@ -6,11 +6,14 @@ struct MuscleGroupChip: View {
 
     var body: some View {
         Label(muscleGroup.displayName, systemImage: muscleGroup.symbolName)
-            .font(.caption.weight(.medium))
+            .font(.caption.weight(.semibold))
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
             .background(
-                Capsule().fill(isSelected ? muscleGroup.color : muscleGroup.color.opacity(0.15))
+                Capsule().fill(isSelected ? muscleGroup.color : muscleGroup.color.opacity(0.28))
+            )
+            .overlay(
+                Capsule().strokeBorder(isSelected ? .clear : muscleGroup.color.opacity(0.55), lineWidth: 1)
             )
             .foregroundStyle(isSelected ? .white : muscleGroup.color)
     }

@@ -8,7 +8,9 @@ struct TemplatesListView: View {
     @State private var showingNewTemplate: WorkoutTemplate?
 
     var body: some View {
-        Group {
+        ZStack {
+            CurveBackground()
+            Group {
             if templates.isEmpty {
                 EmptyStateView(
                     icon: "square.stack.3d.up",
@@ -19,23 +21,38 @@ struct TemplatesListView: View {
                     createTemplate()
                 }
             } else {
-                List {
-                    ForEach(templates) { template in
-                        NavigationLink(value: template) {
-                            TemplateRow(template: template)
+                ScrollView {
+                    VStack(spacing: 10) {
+                        ForEach(templates) { template in
+                            NavigationLink(value: template) {
+                                TemplateRow(template: template)
+                            }
+                            .buttonStyle(.plain)
+                            .contextMenu {
+                                Button(role: .destructive) {
+                                    context.delete(template)
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                            }
                         }
                     }
-                    .onDelete(perform: deleteTemplates)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 8)
+                    .padding(.bottom, 110)
                 }
+            }
             }
         }
         .navigationTitle("Templates")
+        .toolbarBackground(.hidden, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {
                     createTemplate()
                 } label: {
                     Image(systemName: "plus")
+                        .foregroundStyle(.white)
                 }
             }
         }
@@ -46,6 +63,7 @@ struct TemplatesListView: View {
             NavigationStack {
                 TemplateEditorView(template: template, isNew: true)
             }
+            .preferredColorScheme(.dark)
         }
     }
 
@@ -54,28 +72,28 @@ struct TemplatesListView: View {
         context.insert(template)
         showingNewTemplate = template
     }
-
-    private func deleteTemplates(at offsets: IndexSet) {
-        for index in offsets {
-            context.delete(templates[index])
-        }
-    }
 }
 
 private struct TemplateRow: View {
     let template: WorkoutTemplate
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Image(systemName: template.iconName)
-                    .foregroundStyle(Color.accentColor)
+                ZStack {
+                    Circle().fill(.white.opacity(0.16))
+                    Image(systemName: template.iconName)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
+                .frame(width: 32, height: 32)
                 Text(template.name)
-                    .font(.headline)
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(.white)
             }
             Text("\(template.sortedExercises.count) exercises")
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(CurveTheme.textTertiary)
             if !template.muscleGroups.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 6) {
@@ -86,7 +104,7 @@ private struct TemplateRow: View {
                 }
             }
         }
-        .padding(.vertical, 4)
+        .glassCard(cornerRadius: 18, padding: 14)
     }
 }
 
@@ -95,4 +113,5 @@ private struct TemplateRow: View {
         TemplatesListView()
     }
     .modelContainer(PreviewData.container)
+    .preferredColorScheme(.dark)
 }

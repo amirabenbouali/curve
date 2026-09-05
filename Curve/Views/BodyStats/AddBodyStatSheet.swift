@@ -12,34 +12,42 @@ struct AddBodyStatSheet: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                DatePicker("Date", selection: $date, displayedComponents: .date)
+            ZStack {
+                CurveBackground()
+                Form {
+                    DatePicker("Date", selection: $date, displayedComponents: .date)
+                        .listRowBackground(Color.white.opacity(0.08))
 
-                Section("Measurements") {
-                    HStack {
-                        Text("Weight")
-                        Spacer()
-                        TextField("lb", text: $weightText)
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 100)
+                    Section("Measurements") {
+                        HStack {
+                            Text("Weight")
+                            Spacer()
+                            TextField("lb", text: $weightText)
+                                .keyboardType(.decimalPad)
+                                .multilineTextAlignment(.trailing)
+                                .frame(width: 100)
+                        }
+                        HStack {
+                            Text("Body Fat")
+                            Spacer()
+                            TextField("%", text: $bodyFatText)
+                                .keyboardType(.decimalPad)
+                                .multilineTextAlignment(.trailing)
+                                .frame(width: 100)
+                        }
                     }
-                    HStack {
-                        Text("Body Fat")
-                        Spacer()
-                        TextField("%", text: $bodyFatText)
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 100)
-                    }
-                }
+                    .listRowBackground(Color.white.opacity(0.08))
 
-                Section("Notes") {
-                    TextField("Optional notes", text: $notes, axis: .vertical)
+                    Section("Notes") {
+                        TextField("Optional notes", text: $notes, axis: .vertical)
+                    }
+                    .listRowBackground(Color.white.opacity(0.08))
                 }
+                .curveScrollBackground()
             }
             .navigationTitle("Add Body Stat")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -50,6 +58,7 @@ struct AddBodyStatSheet: View {
                 }
             }
         }
+        .preferredColorScheme(.dark)
     }
 
     private func save() {
@@ -67,4 +76,5 @@ struct AddBodyStatSheet: View {
 #Preview {
     AddBodyStatSheet()
         .modelContainer(PreviewData.container)
+        .preferredColorScheme(.dark)
 }

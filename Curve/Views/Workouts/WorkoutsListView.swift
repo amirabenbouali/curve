@@ -18,7 +18,9 @@ struct WorkoutsListView: View {
     }
 
     var body: some View {
-        Group {
+        ZStack {
+            CurveBackground()
+            Group {
             if sessions.isEmpty {
                 EmptyStateView(
                     icon: "dumbbell",
@@ -29,51 +31,71 @@ struct WorkoutsListView: View {
                     showingStartSheet = true
                 }
             } else {
-                List {
-                    if let inProgressSession {
-                        Section {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        if let inProgressSession {
                             Button {
                                 activeSession = inProgressSession
                             } label: {
-                                HStack {
+                                HStack(spacing: 12) {
                                     Image(systemName: "play.circle.fill")
-                                        .foregroundStyle(.green)
                                         .font(.title2)
-                                    VStack(alignment: .leading) {
+                                        .foregroundStyle(.white)
+                                    VStack(alignment: .leading, spacing: 2) {
                                         Text(inProgressSession.name)
-                                            .font(.headline)
+                                            .font(.system(size: 15, weight: .bold))
+                                            .foregroundStyle(.white)
                                         Text("Workout in progress — tap to resume")
                                             .font(.caption)
-                                            .foregroundStyle(.secondary)
+                                            .foregroundStyle(CurveTheme.textSecondary)
+                                    }
+                                    Spacer()
+                                }
+                                .glassCard(cornerRadius: 18, padding: 14)
+                            }
+                            .buttonStyle(.plain)
+                        }
+
+                        Text("History")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundStyle(CurveTheme.textPrimary)
+
+                        VStack(spacing: 10) {
+                            ForEach(completedSessions) { session in
+                                NavigationLink {
+                                    WorkoutDetailView(session: session)
+                                } label: {
+                                    WorkoutSessionRow(session: session)
+                                }
+                                .buttonStyle(.plain)
+                                .contextMenu {
+                                    Button(role: .destructive) {
+                                        context.delete(session)
+                                    } label: {
+                                        Label("Delete", systemImage: "trash")
                                     }
                                 }
                             }
                         }
                     }
-
-                    Section("History") {
-                        ForEach(completedSessions) { session in
-                            NavigationLink(value: session) {
-                                WorkoutSessionRow(session: session)
-                            }
-                        }
-                        .onDelete(perform: deleteSessions)
-                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 8)
+                    .padding(.bottom, 110)
                 }
             }
+            }
         }
-        .navigationTitle("Workouts")
+        .navigationTitle("Log")
+        .toolbarBackground(.hidden, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {
                     showingStartSheet = true
                 } label: {
                     Image(systemName: "plus")
+                        .foregroundStyle(.white)
                 }
             }
-        }
-        .navigationDestination(for: WorkoutSession.self) { session in
-            WorkoutDetailView(session: session)
         }
         .sheet(isPresented: $showingStartSheet) {
             StartWorkoutSheet(templates: templates) { session in
@@ -86,36 +108,31 @@ struct WorkoutsListView: View {
             }
         }
     }
-
-    private func deleteSessions(at offsets: IndexSet) {
-        for index in offsets {
-            context.delete(completedSessions[index])
-        }
-    }
 }
 
 private struct WorkoutSessionRow: View {
     let session: WorkoutSession
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(session.name)
-                    .font(.headline)
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(.white)
                 Spacer()
                 Text(session.startedAt.formattedShort())
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(CurveTheme.textTertiary)
             }
-            HStack(spacing: 12) {
+            HStack(spacing: 14) {
                 Label(session.duration.formattedDuration(), systemImage: "clock")
                 Label("\(session.totalSets) sets", systemImage: "number")
-                Label("\(Int(session.totalVolume)) lb vol", systemImage: "scalemass")
+                Label("\(Int(session.totalVolume)) lb", systemImage: "scalemass")
             }
             .font(.caption)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(CurveTheme.textSecondary)
         }
-        .padding(.vertical, 4)
+        .glassCard(cornerRadius: 18, padding: 14)
     }
 }
 
@@ -124,4 +141,5 @@ private struct WorkoutSessionRow: View {
         WorkoutsListView()
     }
     .modelContainer(PreviewData.container)
+    .preferredColorScheme(.dark)
 }

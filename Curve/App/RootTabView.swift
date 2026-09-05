@@ -1,36 +1,30 @@
 import SwiftUI
 
 struct RootTabView: View {
+    @State private var selection: CurveTab = .today
+
     var body: some View {
-        TabView {
-            NavigationStack {
-                WorkoutsListView()
-            }
-            .tabItem {
-                Label("Workouts", systemImage: "list.bullet.rectangle")
+        ZStack(alignment: .bottom) {
+            CurveBackground()
+
+            Group {
+                tabContent(.today) { NavigationStack { TodayView() } }
+                tabContent(.log) { NavigationStack { WorkoutsListView() } }
+                tabContent(.progress) { NavigationStack { ProgressDashboardView() } }
+                tabContent(.settings) { NavigationStack { SettingsView() } }
             }
 
-            NavigationStack {
-                TemplatesListView()
-            }
-            .tabItem {
-                Label("Templates", systemImage: "square.stack.3d.up")
-            }
-
-            NavigationStack {
-                ProgressDashboardView()
-            }
-            .tabItem {
-                Label("Progress", systemImage: "chart.line.uptrend.xyaxis")
-            }
-
-            NavigationStack {
-                BodyStatsView()
-            }
-            .tabItem {
-                Label("Body", systemImage: "figure.stand")
-            }
+            CurveTabBar(selection: $selection)
+                .padding(.bottom, 8)
         }
+        .preferredColorScheme(.dark)
+    }
+
+    @ViewBuilder
+    private func tabContent<Content: View>(_ tab: CurveTab, @ViewBuilder content: () -> Content) -> some View {
+        content()
+            .opacity(selection == tab ? 1 : 0)
+            .allowsHitTesting(selection == tab)
     }
 }
 
