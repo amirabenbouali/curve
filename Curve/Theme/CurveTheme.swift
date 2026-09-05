@@ -23,6 +23,34 @@ enum CurveTheme {
         endPoint: .bottomTrailing
     )
 
+    /// Cream-to-sage fill used for in-card progress bars.
+    static let progressFill = LinearGradient(
+        colors: [Color(red: 0.894, green: 0.914, blue: 0.890), Color(red: 0.576, green: 0.659, blue: 0.612)],
+        startPoint: .leading,
+        endPoint: .trailing
+    )
+
+    /// Glossy specular fill for small icon chips (avatar, stat icons, list icons) —
+    /// the recurring "chrome glass" highlight from the reference design.
+    static let glossyIconFill = LinearGradient(
+        colors: [.white.opacity(0.55), .white.opacity(0.08)],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+
+    /// Cream-to-sage conic sweep for the streak ring, matching the reference's
+    /// conic-gradient(#F2F0E9 0deg, #C9D3CC 130deg, #7C8E84 270deg).
+    static let ringSweep = AngularGradient(
+        gradient: Gradient(stops: [
+            .init(color: Color(red: 0.949, green: 0.941, blue: 0.914), location: 0),
+            .init(color: Color(red: 0.788, green: 0.827, blue: 0.800), location: 0.361),
+            .init(color: Color(red: 0.486, green: 0.557, blue: 0.518), location: 0.75),
+        ]),
+        center: .center,
+        startAngle: .degrees(-90),
+        endAngle: .degrees(270)
+    )
+
     static let chromeSolid = Color(red: 0.918, green: 0.933, blue: 0.914)
 
     static let textPrimary = Color.white

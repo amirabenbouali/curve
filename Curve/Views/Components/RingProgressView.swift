@@ -12,7 +12,7 @@ struct RingProgressView: View {
                 .stroke(.white.opacity(0.18), lineWidth: 7)
             Circle()
                 .trim(from: 0, to: min(max(progress, 0), 1))
-                .stroke(CurveTheme.chrome, style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                .stroke(CurveTheme.ringSweep, style: StrokeStyle(lineWidth: 7, lineCap: .round))
                 .rotationEffect(.degrees(-90))
             Circle()
                 .fill(Color(red: 0.059, green: 0.078, blue: 0.071).opacity(0.82))

@@ -122,13 +122,14 @@ struct TodayView: View {
             }
             Spacer()
             ZStack {
-                Circle().fill(.white.opacity(0.18))
+                Circle().fill(CurveTheme.glossyIconFill)
                 Text(initials)
                     .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(.white)
             }
             .frame(width: 42, height: 42)
-            .overlay(Circle().strokeBorder(.white.opacity(0.5), lineWidth: 1))
+            .overlay(Circle().strokeBorder(.white.opacity(0.55), lineWidth: 1))
+            .shadow(color: .black.opacity(0.25), radius: 4, x: 0, y: 2)
         }
     }
 
@@ -137,6 +138,7 @@ struct TodayView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("WEEK STREAK")
                     .font(.system(size: 11, weight: .semibold))
+                    .tracking(1)
                     .foregroundStyle(CurveTheme.textSecondary)
                 Text("\(streakResult.streakWeeks)")
                     .font(.system(size: 34, weight: .heavy))
@@ -158,8 +160,10 @@ struct TodayView: View {
     private var freezeNote: some View {
         HStack(spacing: 10) {
             ZStack {
-                Circle().fill(.white.opacity(0.18))
-                Text("❄️").font(.system(size: 12))
+                Circle().fill(CurveTheme.glossyIconFill)
+                Image(systemName: "snowflake")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.white)
             }
             .frame(width: 26, height: 26)
             Text("\(streakResult.freezesAvailable) streak freeze\(streakResult.freezesAvailable == 1 ? "" : "s") available if you miss a week")
@@ -244,7 +248,7 @@ struct TodayView: View {
     }
 
     private func tagPill(_ text: String) -> some View {
-        Text(text.uppercased())
+        Text(text)
             .font(.system(size: 10.5, weight: .semibold))
             .foregroundStyle(.white)
             .padding(.horizontal, 10)
@@ -257,7 +261,7 @@ struct TodayView: View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
                 Capsule().fill(.white.opacity(0.16))
-                Capsule().fill(CurveTheme.chrome)
+                Capsule().fill(CurveTheme.progressFill)
                     .frame(width: geo.size.width * min(Double(value) / Double(total), 1))
             }
         }
@@ -270,7 +274,7 @@ struct TodayView: View {
         } label: {
             HStack(spacing: 12) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous).fill(.white.opacity(0.14))
+                    RoundedRectangle(cornerRadius: 12, style: .continuous).fill(CurveTheme.glossyIconFill)
                     Image(systemName: "figure.strengthtraining.traditional")
                         .font(.system(size: 15))
                         .foregroundStyle(.white)

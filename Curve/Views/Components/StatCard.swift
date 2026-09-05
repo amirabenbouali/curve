@@ -11,12 +11,13 @@ struct StatCard: View {
         VStack(alignment: .leading, spacing: 8) {
             if let icon {
                 ZStack {
-                    Circle().fill(.white.opacity(0.16))
+                    Circle().fill(CurveTheme.glossyIconFill)
                     Image(systemName: icon)
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(tint)
                 }
                 .frame(width: 28, height: 28)
+                .shadow(color: .white.opacity(0.4), radius: 0, x: 0, y: 1)
             }
             Text(value)
                 .font(.system(size: 18, weight: .bold))
