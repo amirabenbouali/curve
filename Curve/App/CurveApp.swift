@@ -9,6 +9,7 @@ struct CurveApp: App {
     @AppStorage("workoutRemindersEnabled") private var remindersEnabled = true
     @AppStorage("streakRiskAlertsEnabled") private var streakRiskEnabled = true
     @AppStorage("weeklySummaryEnabled") private var weeklySummaryEnabled = false
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
 
     init() {
         let schema = Schema([
@@ -30,21 +31,27 @@ struct CurveApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootTabView()
-                .task {
-                    ExerciseSeedData.seedIfNeeded(context: container.mainContext)
-                    if remindersEnabled || streakRiskEnabled || weeklySummaryEnabled {
-                        let descriptor = FetchDescriptor<WorkoutSession>()
-                        let sessions = (try? container.mainContext.fetch(descriptor)) ?? []
-                        NotificationManager.refreshAll(
-                            sessions: sessions,
-                            weeklyGoal: weeklyGoal,
-                            remindersEnabled: remindersEnabled,
-                            streakRiskEnabled: streakRiskEnabled,
-                            weeklySummaryEnabled: weeklySummaryEnabled
-                        )
-                    }
+            Group {
+                if hasCompletedOnboarding {
+                    RootTabView()
+                } else {
+                    OnboardingView(onComplete: { hasCompletedOnboarding = true })
                 }
+            }
+            .task {
+                ExerciseSeedData.seedIfNeeded(context: container.mainContext)
+                if remindersEnabled || streakRiskEnabled || weeklySummaryEnabled {
+                    let descriptor = FetchDescriptor<WorkoutSession>()
+                    let sessions = (try? container.mainContext.fetch(descriptor)) ?? []
+                    NotificationManager.refreshAll(
+                        sessions: sessions,
+                        weeklyGoal: weeklyGoal,
+                        remindersEnabled: remindersEnabled,
+                        streakRiskEnabled: streakRiskEnabled,
+                        weeklySummaryEnabled: weeklySummaryEnabled
+                    )
+                }
+            }
         }
         .modelContainer(container)
     }
