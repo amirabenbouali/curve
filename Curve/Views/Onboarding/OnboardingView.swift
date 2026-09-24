@@ -288,34 +288,14 @@ struct OnboardingView: View {
 
 private struct CurveMark: View {
     var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 30, style: .continuous)
-                .fill(LinearGradient(
-                    colors: [
-                        Color(red: 0.663, green: 0.741, blue: 0.698),
-                        Color(red: 0.369, green: 0.431, blue: 0.404),
-                        Color(red: 0.078, green: 0.129, blue: 0.114),
-                    ],
-                    startPoint: .topLeading, endPoint: .bottomTrailing
-                ))
-                .shadow(color: .black.opacity(0.4), radius: 14, x: 0, y: 8)
-                .overlay(RoundedRectangle(cornerRadius: 30, style: .continuous).strokeBorder(.white.opacity(0.3), lineWidth: 1))
-
-            HStack(spacing: 8) {
-                bar(height: 30)
-                bar(height: 46)
-                bar(height: 22)
-                bar(height: 38)
-            }
-            .rotationEffect(.degrees(-18))
-        }
-        .frame(width: 108, height: 108)
-    }
-
-    private func bar(height: CGFloat) -> some View {
-        RoundedRectangle(cornerRadius: 8, style: .continuous)
-            .fill(Color(red: 0.961, green: 0.957, blue: 0.945))
-            .frame(width: 11, height: height)
+        Image("CurveLogo")
+            .resizable()
+            .scaledToFill()
+            .frame(width: 108, height: 108)
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(.white.opacity(0.3), lineWidth: 1))
+            .shadow(color: .black.opacity(0.4), radius: 14, x: 0, y: 8)
+            .accessibilityLabel("Curve")
     }
 }
 
