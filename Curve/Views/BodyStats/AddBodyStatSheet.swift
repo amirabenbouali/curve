@@ -73,6 +73,7 @@ struct AddBodyStatSheet: View {
             notes: notes.trimmingCharacters(in: .whitespacesAndNewlines)
         )
         context.insert(entry)
+        SyncManager.pushBodyStat(entry)
         dismiss()
     }
 }

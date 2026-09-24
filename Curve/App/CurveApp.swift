@@ -1,5 +1,7 @@
 import SwiftUI
 import SwiftData
+import FirebaseCore
+import GoogleSignIn
 
 @main
 struct CurveApp: App {
@@ -12,6 +14,13 @@ struct CurveApp: App {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
 
     init() {
+        // Only configure Firebase once GoogleService-Info.plist is actually in the
+        // bundle — FirebaseApp.configure() fatal-errors without it, and everything
+        // in AuthManager/SyncManager is written to no-op gracefully until then.
+        if Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist") != nil {
+            FirebaseApp.configure()
+        }
+
         let schema = Schema([
             Exercise.self,
             WorkoutTemplate.self,
@@ -51,6 +60,9 @@ struct CurveApp: App {
                         weeklySummaryEnabled: weeklySummaryEnabled
                     )
                 }
+            }
+            .onOpenURL { url in
+                GIDSignIn.sharedInstance.handle(url)
             }
         }
         .modelContainer(container)

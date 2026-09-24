@@ -156,6 +156,7 @@ private struct AddCustomExerciseSheet: View {
                     Button("Add") {
                         let exercise = Exercise(name: name.trimmingCharacters(in: .whitespaces), muscleGroup: muscleGroup, isCustom: true)
                         context.insert(exercise)
+                        SyncManager.pushCustomExercise(exercise)
                         onCreate(exercise)
                         dismiss()
                     }

@@ -13,6 +13,7 @@ struct OnboardingView: View {
     @State private var step: OnboardingStep = .welcome
     @State private var selectedGoal = 4
     @State private var selectedUnit: WeightUnit = .lb
+    @State private var showingLogin = false
 
     var body: some View {
         ZStack {
@@ -49,14 +50,29 @@ struct OnboardingView: View {
                 }
             }
             Spacer()
-            Button("Get started") {
-                step = .goal
+            VStack(spacing: 14) {
+                Button("Get started") {
+                    step = .goal
+                }
+                .buttonStyle(.curveChrome)
+
+                Button {
+                    showingLogin = true
+                } label: {
+                    (Text("Already training with Curve? ")
+                        .foregroundStyle(CurveTheme.textSecondary)
+                        + Text("Log in").bold().foregroundStyle(.white))
+                        .font(.system(size: 12.5))
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.curveChrome)
         }
         .padding(.horizontal, 24)
         .padding(.top, 60)
         .padding(.bottom, 40)
+        .sheet(isPresented: $showingLogin) {
+            LoginView(onSignedIn: onComplete)
+        }
     }
 
     // MARK: - Screen 2: Weekly goal

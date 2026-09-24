@@ -83,6 +83,7 @@ struct BodyStatsView: View {
                                 BodyStatRow(entry: entry)
                                     .contextMenu {
                                         Button(role: .destructive) {
+                                            SyncManager.deleteBodyStat(id: entry.id)
                                             context.delete(entry)
                                         } label: {
                                             Label("Delete", systemImage: "trash")

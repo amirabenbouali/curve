@@ -15,6 +15,7 @@ struct RootTabView: View {
             }
 
             CurveTabBar(selection: $selection)
+                .environment(\.curvePalette, selection == .today ? .plum : .sage)
                 .padding(.bottom, 8)
         }
         .preferredColorScheme(.dark)

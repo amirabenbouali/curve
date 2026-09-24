@@ -6,6 +6,7 @@ struct StatCard: View {
     var subtitle: String? = nil
     var icon: String? = nil
     var tint: Color = .white
+    var cornerRadius: CGFloat = 18
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -32,7 +33,7 @@ struct StatCard: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .glassCard(cornerRadius: 18, padding: 14)
+        .glassCard(cornerRadius: cornerRadius, padding: 14)
     }
 }
 

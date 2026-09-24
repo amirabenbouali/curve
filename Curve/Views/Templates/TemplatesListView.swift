@@ -30,6 +30,7 @@ struct TemplatesListView: View {
                             .buttonStyle(.plain)
                             .contextMenu {
                                 Button(role: .destructive) {
+                                    SyncManager.deleteTemplate(id: template.id)
                                     context.delete(template)
                                 } label: {
                                     Label("Delete", systemImage: "trash")

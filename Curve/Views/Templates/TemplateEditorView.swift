@@ -53,8 +53,11 @@ struct TemplateEditorView: View {
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { dismiss() }
-                        .disabled(template.name.trimmingCharacters(in: .whitespaces).isEmpty)
+                    Button("Save") {
+                        SyncManager.pushTemplate(template)
+                        dismiss()
+                    }
+                    .disabled(template.name.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             } else {
                 ToolbarItem(placement: .primaryAction) {
@@ -67,6 +70,14 @@ struct TemplateEditorView: View {
                 let templateExercise = TemplateExercise(exercise: exercise, order: template.sortedExercises.count, restSeconds: defaultRestSeconds)
                 templateExercise.template = template
                 context.insert(templateExercise)
+            }
+        }
+        .onDisappear {
+            // isNew templates push explicitly via Save/Cancel above; this
+            // captures live edits (name, exercises, sets/reps) made while
+            // editing an existing template, on the way back out.
+            if !isNew {
+                SyncManager.pushTemplate(template)
             }
         }
     }

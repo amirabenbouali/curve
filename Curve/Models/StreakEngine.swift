@@ -130,7 +130,8 @@ enum StreakEngine {
                 count: count,
                 isCurrent: isCurrent,
                 metGoal: metGoal,
-                usedFreeze: usedFreeze
+                usedFreeze: usedFreeze,
+                start: week
             ))
 
             week = calendar.date(byAdding: .weekOfYear, value: 1, to: week) ?? currentWeekStart
@@ -206,4 +207,5 @@ struct PeriodBar: Identifiable {
     let isCurrent: Bool
     let metGoal: Bool
     let usedFreeze: Bool
+    var start: Date? = nil
 }

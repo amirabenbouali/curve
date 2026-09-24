@@ -59,10 +59,39 @@ enum CurveTheme {
     static let hairline = Color.white.opacity(0.14)
 }
 
+enum CurvePalette {
+    case sage
+    case plum
+}
+
+private struct CurvePaletteKey: EnvironmentKey {
+    static let defaultValue: CurvePalette = .sage
+}
+
+extension EnvironmentValues {
+    /// Selects the glass-card look; screens on the plum background set this so their cards match.
+    var curvePalette: CurvePalette {
+        get { self[CurvePaletteKey.self] }
+        set { self[CurvePaletteKey.self] = newValue }
+    }
+}
+
 /// Full-bleed background gradient with a soft diagonal light sweep,
 /// meant to sit behind the whole app.
 struct CurveBackground: View {
+    var palette: CurvePalette = .sage
+
     var body: some View {
+        Group {
+            switch palette {
+            case .sage: sage
+            case .plum: PlumBackground()
+            }
+        }
+        .ignoresSafeArea()
+    }
+
+    private var sage: some View {
         ZStack {
             CurveTheme.backgroundGradient
             LinearGradient(
@@ -77,7 +106,6 @@ struct CurveBackground: View {
             )
             .blendMode(.overlay)
         }
-        .ignoresSafeArea()
     }
 }
 
@@ -87,8 +115,16 @@ struct CurveBackground: View {
 struct GlassCard: ViewModifier {
     var cornerRadius: CGFloat = 24
     var padding: CGFloat = 18
+    @Environment(\.curvePalette) private var palette
 
     func body(content: Content) -> some View {
+        switch palette {
+        case .sage: sage(content)
+        case .plum: plum(content)
+        }
+    }
+
+    private func sage(_ content: Content) -> some View {
         content
             .padding(padding)
             .background(
@@ -112,6 +148,39 @@ struct GlassCard: ViewModifier {
                     .padding(.top, 1)
             }
             .shadow(color: .black.opacity(0.25), radius: 18, x: 0, y: 10)
+    }
+
+    /// Glossy diagonal white wash with no dark tint, so the plum background shows
+    /// through as pink-violet instead of going grey.
+    private func plum(_ content: Content) -> some View {
+        content
+            .padding(padding)
+            .background(
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .fill(LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.20), location: 0),
+                            .init(color: .white.opacity(0.05), location: 0.55),
+                            .init(color: .white.opacity(0.10), location: 1),
+                        ],
+                        startPoint: UnitPoint(x: 0.3, y: 0),
+                        endPoint: UnitPoint(x: 0.7, y: 1)
+                    ))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .strokeBorder(.white.opacity(0.22), lineWidth: 1)
+            )
+            .overlay(alignment: .top) {
+                LinearGradient(
+                    colors: [.clear, .white.opacity(0.35), .clear],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+                .frame(height: 1)
+                .padding(.horizontal, 16)
+            }
+            .shadow(color: .black.opacity(0.45), radius: 16, x: 0, y: 12)
     }
 }
 

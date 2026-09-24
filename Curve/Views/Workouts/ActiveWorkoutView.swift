@@ -387,6 +387,7 @@ struct ActiveWorkoutView: View {
     private func finishWorkout() {
         session.endedAt = Date()
         try? context.save()
+        SyncManager.pushSession(session)
         if streakRiskEnabled {
             let result = StreakEngine.calculate(sessions: allSessions, weeklyGoal: weeklyGoal)
             if result.thisWeekCount >= weeklyGoal {

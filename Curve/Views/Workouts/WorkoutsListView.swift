@@ -119,6 +119,7 @@ struct WorkoutsListView: View {
                                             .buttonStyle(.plain)
                                             .contextMenu {
                                                 Button(role: .destructive) {
+                                                    SyncManager.deleteSession(id: session.id)
                                                     context.delete(session)
                                                 } label: {
                                                     Label("Delete", systemImage: "trash")
@@ -229,6 +230,7 @@ struct WorkoutsListView: View {
         .buttonStyle(.plain)
         .contextMenu {
             Button(role: .destructive) {
+                SyncManager.deleteSession(id: session.id)
                 context.delete(session)
             } label: {
                 Label("Discard Workout", systemImage: "trash")

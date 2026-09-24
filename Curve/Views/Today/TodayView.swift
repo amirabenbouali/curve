@@ -58,7 +58,7 @@ struct TodayView: View {
 
     var body: some View {
         ZStack {
-            CurveBackground()
+            CurveBackground(palette: .plum)
             ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 header
@@ -69,10 +69,17 @@ struct TodayView: View {
                     freezeNote
                 }
 
+                Text("This month")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(CurveTheme.textPrimary)
+                    .padding(.top, 4)
+
+                MonthCalendarCard(sessions: sessions, weeklyGoal: weeklyGoal)
+
                 HStack(spacing: 10) {
-                    StatCard(title: "Volume", value: thisWeekVolume.displayWeight(unit: weightUnit), icon: "scalemass.fill")
-                    StatCard(title: "Active time", value: thisWeekActiveTime.formattedDuration(), icon: "clock.fill")
-                    StatCard(title: "Sets", value: "\(thisWeekSets)", icon: "checkmark.circle.fill")
+                    StatCard(title: "Volume", value: thisWeekVolume.displayWeight(unit: weightUnit), icon: "scalemass.fill", cornerRadius: 24)
+                    StatCard(title: "Active time", value: thisWeekActiveTime.formattedDuration(), icon: "clock.fill", cornerRadius: 24)
+                    StatCard(title: "Sets", value: "\(thisWeekSets)", icon: "checkmark.circle.fill", cornerRadius: 24)
                 }
 
                 Text("Today's workout")
@@ -99,6 +106,7 @@ struct TodayView: View {
             .padding(.top, 8)
             .padding(.bottom, 110)
             }
+            .environment(\.curvePalette, .plum)
         }
         .toolbarBackground(.hidden, for: .navigationBar)
         .sheet(isPresented: $showingStartSheet) {
@@ -128,7 +136,7 @@ struct TodayView: View {
                 Circle().fill(CurveTheme.glossyIconFill)
                 Text(initials)
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Color(hex: 0x1C231F))
             }
             .frame(width: 42, height: 42)
             .overlay(Circle().strokeBorder(.white.opacity(0.55), lineWidth: 1))
@@ -174,7 +182,7 @@ struct TodayView: View {
                 .foregroundStyle(CurveTheme.textSecondary)
             Spacer()
         }
-        .glassCard(cornerRadius: 18, padding: 12)
+        .glassCard(cornerRadius: 24, padding: 12)
     }
 
     @ViewBuilder
@@ -200,6 +208,7 @@ struct TodayView: View {
             .glassCard()
             .contextMenu {
                 Button(role: .destructive) {
+                    SyncManager.deleteSession(id: inProgressSession.id)
                     context.delete(inProgressSession)
                 } label: {
                     Label("Discard Workout", systemImage: "trash")
@@ -281,6 +290,7 @@ struct TodayView: View {
     private func recentRow(_ session: WorkoutSession) -> some View {
         NavigationLink {
             WorkoutDetailView(session: session)
+                .environment(\.curvePalette, .sage)
         } label: {
             HStack(spacing: 12) {
                 ZStack {
@@ -304,7 +314,7 @@ struct TodayView: View {
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.white.opacity(0.85))
             }
-            .glassCard(cornerRadius: 18, padding: 13)
+            .glassCard(cornerRadius: 24, padding: 13)
         }
         .buttonStyle(.plain)
     }

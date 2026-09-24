@@ -85,6 +85,7 @@ struct WorkoutDetailView: View {
         }
         .confirmationDialog("Delete this workout?", isPresented: $showingDeleteConfirmation, titleVisibility: .visible) {
             Button("Delete", role: .destructive) {
+                SyncManager.deleteSession(id: session.id)
                 context.delete(session)
                 dismiss()
             }

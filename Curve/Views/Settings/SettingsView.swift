@@ -5,6 +5,7 @@ import UserNotifications
 struct SettingsView: View {
     @Environment(\.modelContext) private var context
     @Query(sort: \WorkoutSession.startedAt, order: .reverse) private var allSessions: [WorkoutSession]
+    var auth = AuthManager.shared
 
     @AppStorage("userName") private var userName = ""
     @AppStorage("weeklyGoal") private var weeklyGoal = 4
@@ -22,6 +23,8 @@ struct SettingsView: View {
     @State private var showingPrivacySheet = false
     @State private var showingResetConfirmation = false
     @State private var showingPermissionDeniedAlert = false
+    @State private var showingSignOutConfirmation = false
+    @State private var showingLogin = false
 
     private var weightUnit: WeightUnit { WeightUnit(rawValue: weightUnitRaw) ?? .lb }
 
@@ -144,13 +147,26 @@ struct SettingsView: View {
             Button("Reset All Data", role: .destructive) { resetAllData() }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("This permanently deletes all workouts, templates, body stats, and custom exercises. This can't be undone.")
+            Text(auth.isSignedIn
+                ? "This permanently deletes all workouts, templates, body stats, and custom exercises — on this device and synced to your account. This can't be undone."
+                : "This permanently deletes all workouts, templates, body stats, and custom exercises. This can't be undone.")
         }
         .alert("Notifications Disabled", isPresented: $showingPermissionDeniedAlert) {
             Button("OK", role: .cancel) {}
         } message: {
             Text("Enable notifications for Curve in the Settings app to turn this on.")
         }
+        .sheet(isPresented: $showingLogin) { LoginView() }
+        .confirmationDialog("Log out?", isPresented: $showingSignOutConfirmation, titleVisibility: .visible) {
+            Button("Log Out", role: .destructive) { signOut() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Your data stays synced to \(auth.currentUserEmail ?? "your account") — you can log back in anytime.")
+        }
+    }
+
+    private func signOut() {
+        try? auth.signOut()
     }
 
     // MARK: - Notification toggle handlers
@@ -218,13 +234,21 @@ struct SettingsView: View {
         }
         try? context.save()
         NotificationManager.refreshAll(sessions: [], weeklyGoal: weeklyGoal, remindersEnabled: remindersEnabled, streakRiskEnabled: streakRiskEnabled, weeklySummaryEnabled: weeklySummaryEnabled)
+        if auth.isSignedIn {
+            Task { await SyncManager.deleteAllRemoteData() }
+        }
     }
 
     // MARK: - Building blocks
 
+    @ViewBuilder
     private var profileCard: some View {
         Button {
-            showingProfileSheet = true
+            if auth.isSignedIn {
+                showingSignOutConfirmation = true
+            } else {
+                showingProfileSheet = true
+            }
         } label: {
             HStack(spacing: 14) {
                 ZStack {
@@ -240,18 +264,50 @@ struct SettingsView: View {
                     Text(userName.isEmpty ? "Add your name" : userName)
                         .font(.system(size: 16.5, weight: .bold))
                         .foregroundStyle(.white)
-                    Text("Tap to edit profile")
-                        .font(.curveEyebrow(12.5))
-                        .foregroundStyle(CurveTheme.textSecondary)
+                    if let email = auth.currentUserEmail {
+                        Text(email)
+                            .font(.curveEyebrow(12.5))
+                            .foregroundStyle(CurveTheme.textSecondary)
+                    } else {
+                        Text("Tap to edit profile")
+                            .font(.curveEyebrow(12.5))
+                            .foregroundStyle(CurveTheme.textSecondary)
+                    }
                 }
                 Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14))
-                    .foregroundStyle(.white.opacity(0.4))
+                if auth.isSignedIn {
+                    Text("LOG OUT")
+                        .font(.system(size: 10.5, weight: .bold))
+                        .tracking(0.5)
+                        .foregroundStyle(Color(red: 0.941, green: 0.718, blue: 0.659))
+                } else {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14))
+                        .foregroundStyle(.white.opacity(0.4))
+                }
             }
             .glassCard(padding: 20)
         }
         .buttonStyle(.plain)
+
+        if !auth.isSignedIn {
+            Button {
+                showingLogin = true
+            } label: {
+                HStack {
+                    Image(systemName: "icloud.and.arrow.up")
+                    Text("Sign in to sync your data")
+                        .font(.system(size: 12.5, weight: .semibold))
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                }
+                .foregroundStyle(CurveTheme.textSecondary)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+            }
+            .buttonStyle(.plain)
+        }
     }
 
     private func sectionLabel(_ text: String) -> some View {
@@ -476,7 +532,7 @@ private struct HelpSupportSheet: View {
                         helpItem(title: "Logging a workout", body: "Start a workout from Today or Log, then work through each exercise one set at a time. Tap any exercise in the order list to jump to it.")
                         helpItem(title: "Templates", body: "Save a routine as a template from Settings → Manage Templates so you can start it again with one tap.")
                         helpItem(title: "Streaks & freezes", body: "Hit your weekly workout goal to build a streak. Every 4 weeks on goal banks a streak freeze that automatically covers a missed week, up to 2 banked.")
-                        helpItem(title: "Your data", body: "Everything in Curve is stored only on this device. Reset All Data in Settings permanently erases it.")
+                        helpItem(title: "Your data", body: "Everything in Curve is stored on this device. Sign in to also sync it to your account so it follows you to other devices. Reset All Data in Settings permanently erases it everywhere.")
                     }
                     .padding(20)
                 }
@@ -514,9 +570,10 @@ private struct PrivacyPolicySheet: View {
                 CurveBackground()
                 ScrollView {
                     VStack(alignment: .leading, spacing: 14) {
-                        Text("All your data — workouts, templates, body stats, and settings — is stored locally on this device using SwiftData. Curve has no backend server and no account system, so nothing is ever transmitted, synced, or shared.")
+                        Text("All your data — workouts, templates, body stats, and settings — is stored locally on this device using SwiftData. Using Curve without an account, nothing is ever transmitted, synced, or shared.")
+                        Text("Signing in is optional. If you do, your workouts, templates, body stats, and custom exercises sync to your account via Firebase so they follow you to other devices. Your email and password are handled by Firebase Authentication; Curve never sees or stores your password.")
                         Text("If you enable notifications, reminders are scheduled locally by iOS. No workout data leaves your device to generate them.")
-                        Text("Deleting Curve, or using Reset All Data in Settings, permanently erases everything.")
+                        Text("Deleting Curve, or using Reset All Data in Settings, permanently erases everything — including synced data if you're signed in.")
                     }
                     .font(.system(size: 13.5))
                     .foregroundStyle(CurveTheme.textSecondary)
