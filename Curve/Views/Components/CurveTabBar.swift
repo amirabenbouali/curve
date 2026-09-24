@@ -45,7 +45,7 @@ struct CurveTabBar: View {
         }
         .padding(.horizontal, 10)
         .frame(height: 64)
-        .glassCard(cornerRadius: 28, padding: 0)
+        .glassCard(cornerRadius: 28, padding: 0, blurBackdrop: true)
         .padding(.horizontal, 18)
     }
 }

@@ -119,6 +119,7 @@ struct CurveBackground: View {
 struct GlassCard: ViewModifier {
     var cornerRadius: CGFloat = 24
     var padding: CGFloat = 18
+    var blurBackdrop = false
     @Environment(\.curvePalette) private var palette
 
     func body(content: Content) -> some View {
@@ -171,6 +172,11 @@ struct GlassCard: ViewModifier {
                         endPoint: UnitPoint(x: 0.7, y: 1)
                     ))
             )
+            .background {
+                if blurBackdrop {
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous).fill(.ultraThinMaterial)
+                }
+            }
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .strokeBorder(.white.opacity(0.22), lineWidth: 1)
@@ -189,8 +195,9 @@ struct GlassCard: ViewModifier {
 }
 
 extension View {
-    func glassCard(cornerRadius: CGFloat = 24, padding: CGFloat = 18) -> some View {
-        modifier(GlassCard(cornerRadius: cornerRadius, padding: padding))
+    /// `blurBackdrop` is for floating bars that sit over scrolling content and must hide it.
+    func glassCard(cornerRadius: CGFloat = 24, padding: CGFloat = 18, blurBackdrop: Bool = false) -> some View {
+        modifier(GlassCard(cornerRadius: cornerRadius, padding: padding, blurBackdrop: blurBackdrop))
     }
 
     /// Strips the system grouped background from List/Form so CurveBackground shows through,

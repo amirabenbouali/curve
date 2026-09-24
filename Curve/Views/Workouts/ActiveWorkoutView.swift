@@ -47,7 +47,7 @@ struct ActiveWorkoutView: View {
 
     var body: some View {
         ZStack {
-            CurveBackground()
+            CurveBackground(palette: .plum)
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     header
@@ -87,6 +87,7 @@ struct ActiveWorkoutView: View {
                     .padding(.horizontal, 20)
                     .padding(.bottom, 12)
             }
+            .environment(\.curvePalette, .plum)
         }
         .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $showingExercisePicker) {
@@ -125,7 +126,8 @@ struct ActiveWorkoutView: View {
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.white)
                     .frame(width: 36, height: 36)
-                    .glassCard(cornerRadius: 18, padding: 0)
+                    .background(Circle().fill(CurveTheme.glossyIconFill))
+                    .overlay(Circle().strokeBorder(.white.opacity(0.4), lineWidth: 1))
             }
             .buttonStyle(.plain)
 
@@ -189,6 +191,8 @@ struct ActiveWorkoutView: View {
     private func exerciseCard(_ exercise: LoggedExercise, currentSet: WorkoutSet) -> some View {
         let sets = exercise.sortedSets
         let currentIndex = firstIncompleteSetIndex(in: exercise)
+        let lastTime = lastPerformance(of: exercise, setIndex: currentIndex)
+        let matchesLastTime = lastTime.map { $0.reps == currentSet.reps && abs($0.weight - currentSet.weight) < 0.01 } ?? false
 
         return VStack(alignment: .leading, spacing: 18) {
             VStack(alignment: .leading, spacing: 6) {
@@ -227,23 +231,42 @@ struct ActiveWorkoutView: View {
                 .buttonStyle(.plain)
             }
 
+            if let lastTime {
+                Text("\(matchesLastTime ? "Same as last time" : "Last time") · \(lastTime.reps) reps @ \(lastTime.weight.displayWeight(unit: weightUnit))")
+                    .font(.curveEyebrow(12))
+                    .foregroundStyle(.white.opacity(0.55))
+                    .padding(.top, -6)
+            }
+
             HStack(spacing: 12) {
-                IntStepperField(label: "REPS", value: Binding(get: { currentSet.reps }, set: { currentSet.reps = max(0, $0) }), unit: "reps", step: 1)
+                IntStepperField(label: "REPS", value: Binding(get: { currentSet.reps }, set: { currentSet.reps = max(0, $0) }), unit: "", step: 1)
                 DoubleStepperField(
                     label: "WEIGHT",
                     value: Binding(
                         get: { weightUnit.fromCanonicalLb(currentSet.weight) },
                         set: { currentSet.weight = max(0, weightUnit.toCanonicalLb($0)) }
                     ),
-                    unit: weightUnit.label,
+                    unit: "\(weightUnit.label) · +\(weightUnit.stepSize.formattedWeight()) per tap",
                     step: weightUnit.stepSize
                 )
             }
+            .fixedSize(horizontal: false, vertical: true)
 
-            Button("Log set") { logCurrentSet(currentSet, exercise: exercise) }
-                .buttonStyle(.curveChrome)
+            Button {
+                logCurrentSet(currentSet, exercise: exercise)
+            } label: {
+                if matchesLastTime {
+                    Text("Log set") + Text("  (no changes needed)")
+                        .font(.system(size: 11.5, weight: .medium))
+                        .foregroundStyle(Color(hex: 0x14211D).opacity(0.6))
+                } else {
+                    Text("Log set")
+                }
+            }
+            .buttonStyle(.curveChrome)
         }
-        .padding(22)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 24)
         .glassCard(padding: 0)
     }
 
@@ -267,7 +290,7 @@ struct ActiveWorkoutView: View {
                 .padding(.vertical, 8)
                 .overlay(Capsule().strokeBorder(.white.opacity(0.4), lineWidth: 1))
         }
-        .glassCard(cornerRadius: 18, padding: 18)
+        .glassCard(cornerRadius: 24, padding: 18)
     }
 
     // MARK: - Workout order list
@@ -306,7 +329,7 @@ struct ActiveWorkoutView: View {
                 }
                 Spacer()
             }
-            .glassCard(cornerRadius: 16, padding: 12)
+            .glassCard(cornerRadius: 24, padding: 12)
         }
         .buttonStyle(.plain)
     }
@@ -335,7 +358,7 @@ struct ActiveWorkoutView: View {
             }
             .font(.system(size: 13.5, weight: .semibold))
             .foregroundStyle(.white.opacity(0.85))
-            .glassCard(cornerRadius: 16, padding: 12)
+            .glassCard(cornerRadius: 24, padding: 12)
         }
         .buttonStyle(.plain)
     }
@@ -349,7 +372,7 @@ struct ActiveWorkoutView: View {
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 15)
-            .glassCard(cornerRadius: 18, padding: 0)
+            .glassCard(cornerRadius: 18, padding: 0, blurBackdrop: true)
     }
 
     // MARK: - Actions
@@ -374,6 +397,17 @@ struct ActiveWorkoutView: View {
                 selectedExerciseIndex += 1
             }
         }
+    }
+
+    /// The most recent finished set for this exercise from an earlier workout, matching set position when possible.
+    private func lastPerformance(of exercise: LoggedExercise, setIndex: Int) -> (reps: Int, weight: Double)? {
+        for other in allSessions where other.id != session.id && !other.isInProgress {
+            guard let match = other.sortedExercises.first(where: { $0.displayName == exercise.displayName }) else { continue }
+            let done = match.sortedSets.filter { $0.isCompleted }
+            guard let set = done.first(where: { $0.setIndex == setIndex }) ?? done.last else { continue }
+            return (set.reps, set.weight)
+        }
+        return nil
     }
 
     private func addSetToCurrentExercise(_ exercise: LoggedExercise) {
@@ -415,34 +449,36 @@ struct ActiveWorkoutView: View {
 
 // MARK: - Stepper fields
 
-private struct IntStepperField: View {
+private struct StepperFieldLayout<Value: View>: View {
     let label: String
-    @Binding var value: Int
     let unit: String
-    let step: Int
+    let decrement: () -> Void
+    let increment: () -> Void
+    @ViewBuilder let value: Value
 
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 6) {
             Text(label)
                 .font(.system(size: 10.5, weight: .semibold))
                 .tracking(0.6)
                 .foregroundStyle(.white.opacity(0.6))
-            HStack(spacing: 10) {
-                stepperButton("minus") { value = max(0, value - step) }
-                VStack(spacing: 0) {
-                    Text("\(value)")
-                        .font(.system(size: 26, weight: .heavy))
-                        .foregroundStyle(.white)
-                    Text(unit)
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.5))
-                }
-                .frame(minWidth: 44)
-                stepperButton("plus") { value += step }
+            HStack(spacing: 8) {
+                stepperButton("minus", action: decrement)
+                value
+                    .font(.system(size: 21, weight: .heavy))
+                    .foregroundStyle(.white)
+                    .frame(minWidth: 38)
+                stepperButton("plus", action: increment)
+            }
+            if !unit.isEmpty {
+                Text(unit)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.5))
             }
         }
-        .frame(maxWidth: .infinity)
-        .padding(14)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 12)
         .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(.white.opacity(0.10)))
         .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(.white.opacity(0.28), lineWidth: 1))
     }
@@ -450,12 +486,31 @@ private struct IntStepperField: View {
     private func stepperButton(_ systemName: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: systemName)
-                .font(.system(size: 11, weight: .bold))
+                .font(.system(size: 12, weight: .bold))
                 .foregroundStyle(.white)
-                .frame(width: 26, height: 26)
+                .frame(width: 28, height: 28)
                 .background(Circle().fill(.white.opacity(0.16)))
+                .overlay(Circle().strokeBorder(.white.opacity(0.35), lineWidth: 1))
         }
         .buttonStyle(.plain)
+    }
+}
+
+private struct IntStepperField: View {
+    let label: String
+    @Binding var value: Int
+    let unit: String
+    let step: Int
+
+    var body: some View {
+        StepperFieldLayout(
+            label: label,
+            unit: unit,
+            decrement: { value = max(0, value - step) },
+            increment: { value += step }
+        ) {
+            Text("\(value)")
+        }
     }
 }
 
@@ -466,40 +521,14 @@ private struct DoubleStepperField: View {
     let step: Double
 
     var body: some View {
-        VStack(spacing: 4) {
-            Text(label)
-                .font(.system(size: 10.5, weight: .semibold))
-                .tracking(0.6)
-                .foregroundStyle(.white.opacity(0.6))
-            HStack(spacing: 10) {
-                stepperButton("minus") { value = max(0, value - step) }
-                VStack(spacing: 0) {
-                    Text(value.formattedWeight())
-                        .font(.system(size: 26, weight: .heavy))
-                        .foregroundStyle(.white)
-                    Text(unit)
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.5))
-                }
-                .frame(minWidth: 44)
-                stepperButton("plus") { value += step }
-            }
+        StepperFieldLayout(
+            label: label,
+            unit: unit,
+            decrement: { value = max(0, value - step) },
+            increment: { value += step }
+        ) {
+            Text(value.formattedWeight())
         }
-        .frame(maxWidth: .infinity)
-        .padding(14)
-        .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(.white.opacity(0.10)))
-        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(.white.opacity(0.28), lineWidth: 1))
-    }
-
-    private func stepperButton(_ systemName: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: systemName)
-                .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(.white)
-                .frame(width: 26, height: 26)
-                .background(Circle().fill(.white.opacity(0.16)))
-        }
-        .buttonStyle(.plain)
     }
 }
 
