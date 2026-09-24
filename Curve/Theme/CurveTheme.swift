@@ -51,6 +51,10 @@ enum CurveTheme {
         endAngle: .degrees(270)
     )
 
+    /// Warm flame and icy freeze accents shared by the streak/goal indicators.
+    static let flameTint = Color(red: 1.0, green: 0.78, blue: 0.55)
+    static let freezeTint = Color(red: 0.78, green: 0.88, blue: 1.0)
+
     static let chromeSolid = Color(red: 0.918, green: 0.933, blue: 0.914)
 
     static let textPrimary = Color.white

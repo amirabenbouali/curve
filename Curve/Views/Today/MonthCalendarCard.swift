@@ -23,9 +23,6 @@ struct MonthCalendarCard: View {
         let status: WeekStatus
     }
 
-    private static let flameTint = Color(red: 1.0, green: 0.78, blue: 0.55)
-    private static let freezeTint = Color(red: 0.78, green: 0.88, blue: 1.0)
-
     var body: some View {
         let weeks = buildWeeks()
         let logged = loggedDays
@@ -92,11 +89,11 @@ struct MonthCalendarCard: View {
             Circle().fill(.white.opacity(0.35)).frame(width: 9, height: 9)
             Text("Logged")
             Image(systemName: "flame.fill")
-                .foregroundStyle(Self.flameTint)
+                .foregroundStyle(CurveTheme.flameTint)
                 .padding(.leading, 8)
             Text("Goal met")
             Image(systemName: "snowflake")
-                .foregroundStyle(Self.freezeTint)
+                .foregroundStyle(CurveTheme.freezeTint)
                 .padding(.leading, 8)
             Text("Frozen")
             Spacer(minLength: 0)
@@ -126,12 +123,12 @@ struct MonthCalendarCard: View {
         case .goalMet:
             Image(systemName: "flame.fill")
                 .font(.system(size: 12))
-                .foregroundStyle(Self.flameTint)
+                .foregroundStyle(CurveTheme.flameTint)
                 .accessibilityLabel("Weekly goal met")
         case .frozen:
             Image(systemName: "snowflake")
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(Self.freezeTint)
+                .foregroundStyle(CurveTheme.freezeTint)
                 .accessibilityLabel("Streak freeze used")
         case .pending:
             Text("·")

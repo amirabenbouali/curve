@@ -88,7 +88,7 @@ struct ProgressDashboardView: View {
 
     var body: some View {
         ZStack {
-            CurveBackground()
+            CurveBackground(palette: .plum)
             Group {
                 if completedSessions.isEmpty {
                     EmptyStateView(
@@ -113,7 +113,7 @@ struct ProgressDashboardView: View {
                             }
 
                             if !bodyFocus.isEmpty {
-                                Text("Body Focus")
+                                Text("Body focus")
                                     .font(.system(size: 14.5, weight: .bold))
                                     .foregroundStyle(.white)
                                     .padding(.top, 4)
@@ -121,7 +121,7 @@ struct ProgressDashboardView: View {
                             }
 
                             if !personalRecords.isEmpty {
-                                Text("Personal Records")
+                                Text("Personal records")
                                     .font(.system(size: 14.5, weight: .bold))
                                     .foregroundStyle(.white)
                                     .padding(.top, 4)
@@ -129,6 +129,7 @@ struct ProgressDashboardView: View {
                                     ForEach(personalRecords.prefix(6)) { record in
                                         NavigationLink {
                                             ExerciseProgressDetailView(exerciseName: record.exerciseName, sessions: completedSessions)
+                                                .environment(\.curvePalette, .sage)
                                         } label: {
                                             prRow(record)
                                         }
@@ -143,6 +144,7 @@ struct ProgressDashboardView: View {
                     }
                 }
             }
+            .environment(\.curvePalette, .plum)
         }
         .toolbar(.hidden, for: .navigationBar)
     }
@@ -172,14 +174,15 @@ struct ProgressDashboardView: View {
                             .padding(.horizontal, 10)
                             .padding(.vertical, 6)
                             .background(
-                                Capsule().fill(selectedRange == range ? .white.opacity(0.22) : .clear)
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .fill(selectedRange == range ? .white.opacity(0.22) : .clear)
                             )
                     }
                     .buttonStyle(.plain)
                 }
             }
             .padding(4)
-            .glassCard(cornerRadius: 20, padding: 0)
+            .glassCard(cornerRadius: 16, padding: 0)
         }
         .padding(.top, 8)
     }
@@ -199,9 +202,9 @@ struct ProgressDashboardView: View {
             Spacer()
             Image(systemName: "flame.fill")
                 .font(.system(size: 20))
-                .foregroundStyle(.orange)
+                .foregroundStyle(CurveTheme.flameTint)
         }
-        .glassCard(cornerRadius: 18, padding: 14)
+        .glassCard(cornerRadius: 24, padding: 16)
     }
 
     // MARK: - Chart
@@ -228,7 +231,7 @@ struct ProgressDashboardView: View {
                 .foregroundStyle(CurveTheme.textSecondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .glassCard(cornerRadius: 18, padding: 16)
+        .glassCard(cornerRadius: 24, padding: 16)
     }
 
     // MARK: - Body focus
@@ -249,7 +252,7 @@ struct ProgressDashboardView: View {
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
                             Capsule().fill(.white.opacity(0.14))
-                            Capsule().fill(CurveTheme.progressFill)
+                            Capsule().fill(LinearGradient(colors: [Color(hex: 0xC9D3CC), Color(hex: 0xF2F0E9)], startPoint: .leading, endPoint: .trailing))
                                 .frame(width: geo.size.width * fraction)
                         }
                     }
@@ -285,7 +288,7 @@ struct ProgressDashboardView: View {
                 .font(.system(size: 13, weight: .bold))
                 .foregroundStyle(.white.opacity(0.9))
         }
-        .glassCard(cornerRadius: 18, padding: 13)
+        .glassCard(cornerRadius: 24, padding: 13)
     }
 }
 
@@ -297,7 +300,7 @@ private struct WorkoutBarChart: View {
     private let chartHeight: CGFloat = 130
 
     private var maxScale: Double {
-        Double(max(goalThreshold, bars.map(\.count).max() ?? 0, 1))
+        Double(max(goalThreshold, bars.map(\.count).max() ?? 0, 1)) * 1.2
     }
 
     var body: some View {
@@ -336,25 +339,32 @@ private struct WorkoutBarChart: View {
     @ViewBuilder
     private func barView(_ bar: PeriodBar) -> some View {
         let fraction = min(Double(bar.count) / maxScale, 1)
-        VStack(spacing: 4) {
-            Image(systemName: "snowflake")
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.85))
-                .opacity(bar.usedFreeze ? 1 : 0)
-            Spacer(minLength: 0)
-            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                .fill(barFill(bar))
-                .frame(height: max(chartHeight * CGFloat(fraction) - 20, 4))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .strokeBorder(bar.isCurrent ? .white.opacity(0.6) : .clear, style: StrokeStyle(lineWidth: 1, dash: [3, 3]))
-                )
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+        barShape
+            .fill(barFill(bar))
+            .overlay(
+                barShape
+                    .strokeBorder(bar.isCurrent ? .white.opacity(0.6) : .clear, style: StrokeStyle(lineWidth: 1, dash: [3, 3]))
+            )
+            .frame(height: max(chartHeight * CGFloat(fraction), 4))
+            .frame(maxWidth: 26)
+            .overlay(alignment: .top) {
+                Image(systemName: "snowflake")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(CurveTheme.freezeTint)
+                    .offset(y: -16)
+                    .opacity(bar.usedFreeze ? 1 : 0)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+    }
+
+    private var barShape: UnevenRoundedRectangle {
+        UnevenRoundedRectangle(topLeadingRadius: 7, bottomLeadingRadius: 4, bottomTrailingRadius: 4, topTrailingRadius: 7, style: .continuous)
     }
 
     private func barFill(_ bar: PeriodBar) -> AnyShapeStyle {
-        if bar.isCurrent { return AnyShapeStyle(.white.opacity(0.35)) }
+        if bar.isCurrent {
+            return AnyShapeStyle(LinearGradient(colors: [.white.opacity(0.65), .white.opacity(0.28)], startPoint: .top, endPoint: .bottom))
+        }
         if bar.metGoal {
             return AnyShapeStyle(LinearGradient(
                 colors: [Color(red: 0.949, green: 0.941, blue: 0.914), Color(red: 0.576, green: 0.659, blue: 0.612)],
