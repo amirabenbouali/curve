@@ -69,7 +69,7 @@ struct WorkoutsListView: View {
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
-            CurveBackground()
+            CurveBackground(palette: .plum)
 
             Group {
                 if sessions.isEmpty {
@@ -113,6 +113,7 @@ struct WorkoutsListView: View {
                                         ForEach(group.sessions) { session in
                                             NavigationLink {
                                                 WorkoutDetailView(session: session)
+                                                    .environment(\.curvePalette, .sage)
                                             } label: {
                                                 LogRow(session: session, isPR: prSessionIDs.contains(session.id))
                                             }
@@ -154,6 +155,7 @@ struct WorkoutsListView: View {
                 .padding(.bottom, 108)
             }
         }
+        .environment(\.curvePalette, .plum)
         .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $showingStartSheet) {
             StartWorkoutSheet(templates: templates) { session in
@@ -186,7 +188,7 @@ struct WorkoutsListView: View {
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.white)
                     .frame(width: 40, height: 40)
-                    .glassCard(cornerRadius: 20, padding: 0)
+                    .glassCard(cornerRadius: 20, padding: 0, blurBackdrop: true)
             }
             .buttonStyle(.plain)
         }
@@ -225,7 +227,7 @@ struct WorkoutsListView: View {
                 }
                 Spacer()
             }
-            .glassCard(cornerRadius: 18, padding: 14)
+            .glassCard(cornerRadius: 22, padding: 14)
         }
         .buttonStyle(.plain)
         .contextMenu {
@@ -283,7 +285,7 @@ private struct LogRow: View {
                     .foregroundStyle(.white.opacity(0.35))
             }
         }
-        .glassCard(cornerRadius: 18, padding: 12)
+        .glassCard(cornerRadius: 22, padding: 12)
     }
 }
 
