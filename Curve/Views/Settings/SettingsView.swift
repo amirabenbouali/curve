@@ -46,7 +46,7 @@ struct SettingsView: View {
 
     var body: some View {
         ZStack {
-            CurveBackground()
+            CurveBackground(palette: .plum)
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     Text("Settings")
@@ -135,6 +135,7 @@ struct SettingsView: View {
                 .padding(.horizontal, 20)
                 .padding(.bottom, 110)
             }
+            .environment(\.curvePalette, .plum)
         }
         .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $showingProfileSheet) { ProfileEditSheet(userName: $userName) }
@@ -255,7 +256,7 @@ struct SettingsView: View {
                     Circle().fill(CurveTheme.glossyIconFill)
                     Text(initials)
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Color(hex: 0x1C231F))
                 }
                 .frame(width: 56, height: 56)
                 .overlay(Circle().strokeBorder(.white.opacity(0.5), lineWidth: 1))
@@ -320,7 +321,7 @@ struct SettingsView: View {
 
     private func groupCard<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         VStack(spacing: 0, content: content)
-            .glassCard(cornerRadius: 20, padding: 0)
+            .glassCard(cornerRadius: 24, padding: 0)
     }
 
     private var rowDivider: some View {
