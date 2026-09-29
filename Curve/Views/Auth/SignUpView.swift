@@ -25,7 +25,7 @@ struct SignUpView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                CurveBackground()
+                CurveBackground(palette: .plum)
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
                         Button {
@@ -112,7 +112,7 @@ struct SignUpView: View {
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
-                            .glassCard(cornerRadius: 16, padding: 0)
+                            .glassCard(cornerRadius: 20, padding: 0)
                         }
                         .buttonStyle(.plain)
                         .padding(.top, 18)
@@ -135,6 +135,7 @@ struct SignUpView: View {
                     .padding(.bottom, 40)
                 }
             }
+            .environment(\.curvePalette, .plum)
             .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: $showingLogin) {
                 LoginView(auth: auth, onSignedIn: onSignedIn)
