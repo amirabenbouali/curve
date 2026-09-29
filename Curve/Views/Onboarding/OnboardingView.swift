@@ -17,7 +17,7 @@ struct OnboardingView: View {
 
     var body: some View {
         ZStack {
-            CurveBackground()
+            CurveBackground(palette: .plum)
 
             Group {
                 switch step {
@@ -29,6 +29,7 @@ struct OnboardingView: View {
             }
             .transition(.opacity.combined(with: .move(edge: .trailing)))
         }
+        .environment(\.curvePalette, .plum)
         .animation(.easeInOut(duration: 0.3), value: step)
         .preferredColorScheme(.dark)
     }
@@ -72,6 +73,7 @@ struct OnboardingView: View {
         .padding(.bottom, 40)
         .sheet(isPresented: $showingLogin) {
             LoginView(onSignedIn: onComplete)
+                .environment(\.curvePalette, .sage)
         }
     }
 
@@ -130,7 +132,7 @@ struct OnboardingView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 20)
-            .glassCard(cornerRadius: 18, padding: 0)
+            .glassCard(cornerRadius: 22, padding: 0)
             .overlay(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .strokeBorder(isSelected ? .white.opacity(0.75) : .clear, lineWidth: 1.5)
@@ -204,7 +206,7 @@ struct OnboardingView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 20)
-            .glassCard(cornerRadius: 18, padding: 0)
+            .glassCard(cornerRadius: 22, padding: 0)
             .overlay(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .strokeBorder(isSelected ? .white.opacity(0.75) : .clear, lineWidth: 1.5)
