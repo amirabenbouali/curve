@@ -3,14 +3,14 @@ import SwiftUI
 struct SignUpView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
+    @AppStorage("userName") private var userName = ""
     var auth = AuthManager.shared
     var onSignedIn: () -> Void = {}
 
+    @State private var name = ""
     @State private var email = ""
     @State private var password = ""
-    @State private var confirmPassword = ""
     @State private var isPasswordVisible = false
-    @State private var isConfirmVisible = false
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var showingLogin = false
@@ -18,8 +18,23 @@ struct SignUpView: View {
     private var canSubmit: Bool {
         !email.trimmingCharacters(in: .whitespaces).isEmpty
             && password.count >= 6
-            && password == confirmPassword
             && !isLoading
+    }
+
+    private var passwordStrength: (level: Int, label: String) {
+        guard !password.isEmpty else { return (0, "") }
+        var score = 0
+        if password.count >= 6 { score += 1 }
+        if password.count >= 10 { score += 1 }
+        let hasDigit = password.contains { $0.isNumber }
+        let hasLetter = password.contains { $0.isLetter }
+        let hasMixedCase = password.contains { $0.isUppercase } && password.contains { $0.isLowercase }
+        let hasSymbol = password.contains { !$0.isLetter && !$0.isNumber }
+        if hasDigit && hasLetter { score += 1 }
+        if hasMixedCase || hasSymbol { score += 1 }
+        let level = min(score, 4)
+        let label = ["Too short", "Weak password", "Fair password", "Good password", "Strong password"][level]
+        return (level, label)
     }
 
     var body: some View {
@@ -43,28 +58,46 @@ struct SignUpView: View {
                             Text("Create your account")
                                 .font(.system(size: 26, weight: .heavy))
                                 .foregroundStyle(.white)
-                            Text("Your data follows you across devices from here on.")
+                            Text("Your streak starts the moment you sign up.")
                                 .font(.curveEyebrow(14))
                                 .foregroundStyle(CurveTheme.textSecondary)
                         }
                         .padding(.top, 26)
 
                         VStack(spacing: 14) {
+                            AuthFieldView(label: "Name", text: $name, isSecure: false, isPasswordVisible: .constant(true))
                             AuthFieldView(label: "Email", text: $email, isSecure: false, isPasswordVisible: .constant(true), keyboardType: .emailAddress)
-                            AuthFieldView(label: "Password", text: $password, isSecure: true, isPasswordVisible: $isPasswordVisible)
-                            AuthFieldView(label: "Confirm password", text: $confirmPassword, isSecure: true, isPasswordVisible: $isConfirmVisible)
+
+                            VStack(alignment: .leading, spacing: 0) {
+                                AuthFieldView(label: "Password", text: $password, isSecure: true, isPasswordVisible: $isPasswordVisible)
+
+                                if !password.isEmpty {
+                                    HStack(spacing: 5) {
+                                        ForEach(0..<4) { index in
+                                            Capsule()
+                                                .fill(index < passwordStrength.level ? AnyShapeStyle(CurveTheme.progressFill) : AnyShapeStyle(.white.opacity(0.18)))
+                                                .frame(height: 3)
+                                        }
+                                    }
+                                    .padding(.top, 8)
+                                    Text(passwordStrength.label)
+                                        .font(.system(size: 10))
+                                        .foregroundStyle(CurveTheme.textTertiary)
+                                        .padding(.top, 6)
+                                }
+                            }
 
                             if !password.isEmpty && password.count < 6 {
                                 Text("Password must be at least 6 characters.")
                                     .font(.system(size: 12))
                                     .foregroundStyle(CurveTheme.textTertiary)
                                     .frame(maxWidth: .infinity, alignment: .leading)
-                            } else if !confirmPassword.isEmpty && password != confirmPassword {
-                                Text("Passwords don't match.")
-                                    .font(.system(size: 12))
-                                    .foregroundStyle(Color(red: 0.941, green: 0.718, blue: 0.659))
-                                    .frame(maxWidth: .infinity, alignment: .leading)
                             }
+
+                            Text("By continuing, you agree to Curve's Terms of Service and Privacy Policy.")
+                                .font(.system(size: 11))
+                                .foregroundStyle(CurveTheme.textTertiary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
 
                             if let errorMessage {
                                 Text(errorMessage)
@@ -153,6 +186,8 @@ struct SignUpView: View {
                 await SyncManager.pullAll(context: context)
                 await MainActor.run {
                     isLoading = false
+                    let trimmedName = name.trimmingCharacters(in: .whitespaces)
+                    if !trimmedName.isEmpty { userName = trimmedName }
                     onSignedIn()
                     dismiss()
                 }
