@@ -31,7 +31,7 @@ struct ExercisePickerView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                CurveBackground()
+                CurveBackground(palette: .plum)
                 VStack(spacing: 0) {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
@@ -56,7 +56,15 @@ struct ExercisePickerView: View {
                                         onSelect(exercise)
                                         dismiss()
                                     } label: {
-                                        HStack {
+                                        HStack(spacing: 12) {
+                                            ZStack {
+                                                Circle().fill(exercise.muscleGroup.color.opacity(0.28))
+                                                Image(systemName: exercise.muscleGroup.symbolName)
+                                                    .font(.system(size: 12, weight: .semibold))
+                                                    .foregroundStyle(exercise.muscleGroup.color)
+                                            }
+                                            .frame(width: 28, height: 28)
+
                                             Text(exercise.name)
                                                 .foregroundStyle(.white)
                                             if exercise.isCustom {
@@ -134,7 +142,7 @@ private struct AddCustomExerciseSheet: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                CurveBackground()
+                CurveBackground(palette: .plum)
                 Form {
                     TextField("Exercise name", text: $name)
                     Picker("Muscle Group", selection: $muscleGroup) {

@@ -63,6 +63,8 @@ struct SettingsView: View {
                         navRow(icon: "timer", label: "Default rest timer", value: TimeInterval(defaultRestSeconds).formattedRest()) { showingRestTimerSheet = true }
                         rowDivider
                         navRow(icon: "scalemass", label: "Units", value: weightUnit.label) { showingUnitsSheet = true }
+                        rowDivider
+                        templatesRow
                     }
 
                     sectionLabel("Streak")
@@ -353,6 +355,30 @@ struct SettingsView: View {
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(CurveTheme.textSecondary)
                 }
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.35))
+            }
+            .padding(.vertical, 14)
+            .padding(.horizontal, 16)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// Unlike the other Training rows this pushes a full screen (list of saved
+    /// routines) rather than opening a sheet, so it uses NavigationLink instead
+    /// of navRow's Button — same visual, different presentation.
+    private var templatesRow: some View {
+        NavigationLink {
+            TemplatesListView()
+        } label: {
+            HStack(spacing: 12) {
+                rowIcon("square.stack.3d.up")
+                Text("Templates")
+                    .font(.system(size: 13.5, weight: .semibold))
+                    .foregroundStyle(.white)
+                Spacer()
                 Image(systemName: "chevron.right")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.white.opacity(0.35))
